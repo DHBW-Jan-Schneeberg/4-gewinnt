@@ -1,0 +1,15 @@
+To Dos
+
+
+1. Bugfixes:
+Done 1.1 Column is full, but it can still be placed
+Done 1.2 Game is finished, but selection circle is still showing up
+
+2. Improvements:
+Done 2.1 Add tie functionality
+2.2 Make is_game_over more efficient (check for number of empty fields and check if min 4 of one colour exist before indexing)
+2.3 Improve docstring format and text
+
+# Upgrades:
+# 1. Add computer enemy
+# 2. Update layout and add animations
