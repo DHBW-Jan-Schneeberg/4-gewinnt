@@ -19,7 +19,7 @@ class Game:
 
     field: np.ndarray
     current_player: int  # 1 for Yellow, 2 for Red
-    winner: int | None
+    winner: str | None
 
     width: int
     height: int
@@ -29,6 +29,8 @@ class Game:
 
     robot_enemy: Computer | None
     robot_color = int | None
+
+    MARKER_RADIUS: int = 40  # all caps variable is a constant
 
     def __init__(self, screen: pygame.Surface, *, width, height, against_computer, computer_color=0):
         """
@@ -48,9 +50,8 @@ class Game:
         self.current_player = 1
         self.buffered_input = (False, False, False)
 
-        # Unnötig, oder?
-        # if against_computer and computer_color == 0:
-        #     raise ValueError("Du kannst kein Spiel gegen den Computer starten, ohne ihm eine Farbe zu geben!")
+        if against_computer and computer_color == 0:
+            raise ValueError("Du kannst kein Spiel gegen den Computer starten, ohne ihm eine Farbe zu geben!")
 
         self.robot_enemy = Computer() if against_computer else None
         self.robot_color = computer_color if computer_color != 0 else None
@@ -84,24 +85,24 @@ class Game:
         """
         return np.count_nonzero(self.field)
 
-    def draw_field(self, show_position=True) -> None:
+    def draw_field(self, show_cursor_position=True) -> None:
         self.screen.fill(color="blue")
         for x in range(self.width):
             for y in range(self.height):
                 color = 0xd0d1d1 if self.get_from_field(x, y) == 0 else "yellow" if self.get_from_field(x, y) == 1 else "red"
                 pygame.draw.circle(self.screen, color,
-                                   (x * 105 + 55, y * 105 + 205), radius=40)
+                                   (x * 105 + 55, y * 105 + 205), radius=self.MARKER_RADIUS)
 
         mouse_x, _ = pygame.mouse.get_pos()  # We don't care about y since we place the marker always on top
 
-        if show_position:
+        if show_cursor_position:
             self.show_current_selected_position(mouse_x)
         pygame.display.flip()
 
     def show_current_selected_position(self, mouse_x: int) -> None:
         x = mouse_x // 105
         color = "yellow" if self.current_player == 1 else "red"
-        pygame.draw.circle(self.screen, color, (x * 105 + 55, 55), radius=47)
+        pygame.draw.circle(self.screen, color, (x * 105 + 55, 55), radius=self.MARKER_RADIUS)
 
     def is_4_straight_connected(self, x: int, y: int, *, horizontal: bool):
         """
@@ -140,43 +141,44 @@ class Game:
 
         return True
 
-    def game_is_over(self) -> bool:
+    def is_game_over(self) -> bool:
         # Case 1: tie
         if self.filled_fields() == 42:
             return True
 
-        else:
-            # Case 2: four in a row
-            for y in range(self.height):
-                for x in range(self.width - 3):
-                    if self.is_4_straight_connected(x, y, horizontal=True):
-                        return True
-
-            # Case 3: four in a column
-            for y in range(self.height - 3):
-                for x in range(self.width):
-                    if self.is_4_straight_connected(x, y, horizontal=False):
-                        return True
-
-            # Case 4: four diagonally
+        # Case 2: four in a row
+        for y in range(self.height):
             for x in range(self.width - 3):
-                for y in range(self.height - 3):
-                    if self.is_4_diagonal_connected(x, y, high_to_low=True) or self.is_4_diagonal_connected(x, y, high_to_low=False):
-                        return True
+                if self.is_4_straight_connected(x, y, horizontal=True):
+                    return True
+
+        # Case 3: four in a column
+        for y in range(self.height - 3):
+            for x in range(self.width):
+                if self.is_4_straight_connected(x, y, horizontal=False):
+                    return True
+
+        # Case 4: four diagonally
+        for x in range(self.width - 3):
+            for y in range(self.height - 3):
+                if self.is_4_diagonal_connected(x, y, high_to_low=True) or self.is_4_diagonal_connected(x, y, high_to_low=False):
+                    return True
 
         return False
 
-    def place_marker(self, x: int) -> None:
-        # If the field is already occupied
+    def place_marker(self, x: int) -> bool:
+        """
+        :param x: x-index of the column
+        :return:  False if the placement was not successful due to a full column
+        """
         if self.get_from_field(x, 0) != 0:
-            self.swap_player()
-            return
+            return False
 
         for y in range(self.height):
             y = 5 - y
             if self.get_from_field(x, y) == 0:
                 self.set_in_field(x, y, self.current_player)
-                break
+                return True
 
     def swap_player(self) -> None:
         self.current_player = 1 if self.current_player == 2 else 2
@@ -186,21 +188,22 @@ class Game:
         self.draw_field()
 
         play_again_button = Button(268, 50, 249, 60, "Erneut spielen", self.screen)
+        game_over = False
 
         while True:
             # Limiting FPS and waiting on input, else the program gets "frozen"
-            self.clock.tick(10)
+            self.clock.tick(20)
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     sys.exit()
 
-            if self.game_is_over():
+            if game_over:
                 if self.filled_fields() == 42:
                     pygame.display.set_caption(title=("Unentschieden"))
                 else:
-                    self.winner = self.current_player
-                    pygame.display.set_caption(title=("Gelb" if self.winner == 1 else "Rot") + " gewinnt")
+                    self.winner = "Geld" if self.current_player == 2 else "Rot"
+                    pygame.display.set_caption(title=self.winner + " gewinnt")
 
                 if not play_again_button.clicked:
                     play_again_button.process()
@@ -208,11 +211,10 @@ class Game:
                 else:
                     self.reset()
                     play_again_button.clicked = False
+                    game_over = False
                 continue
 
             # Hier beginnt tatsächlich so die "richtige" game loop
-            was_currently_clicked = False
-
             if self.robot_enemy and self.current_player == self.robot_color:
                 # TODO
                 pygame.time.delay(int(3500 * random.random()))  # Player should feel as if the computer needs to "think"
@@ -225,20 +227,18 @@ class Game:
                     self.buffered_input = mouse_buttons_pressed
 
                     if mouse_buttons_pressed[0]:
-                        was_currently_clicked = True
                         mouse_x, _ = pygame.mouse.get_pos()
-                        self.place_marker(mouse_x // 105)
+                        if self.place_marker(mouse_x // 105):
+                            self.swap_player()
 
-            if not self.game_is_over():
-                # Case 1: game not finished, action beforehand
-                if was_currently_clicked:
-                    self.swap_player()
-                # Case 2: game not finished, no action beforehand
-                else:
-                    self.draw_field()
-            # Case 3: game finished
+            game_over = self.is_game_over()
+            if game_over:
+                self.draw_field(show_cursor_position=False)
+
+                # Waits so the player can release the pressed mouse button to not immediately restart the game
+                pygame.time.delay(100)
             else:
-                self.draw_field(show_position=False)
+                self.draw_field(show_cursor_position=True)
 
 
 def start_game(*, against_computer: bool, computer_color: int | None = None):
@@ -298,7 +298,7 @@ class OptionScreen:
 
     def await_input(self):
         while True:
-            self.clock.tick(5)
+            self.clock.tick(10)
             self.screen.fill(0x3333ff)
 
             for event in pygame.event.get():
