@@ -4,7 +4,7 @@ import sys
 import pygame
 
 from computer import Computer
-from field_methods import *
+from board import Board
 
 
 class Game:
@@ -12,7 +12,7 @@ class Game:
     screen: pygame.Surface
     clock: pygame.time.Clock
 
-    field: np.ndarray
+    board: Board
     current_player: int  # 1 for Yellow, 2 for Red
     winner: str | None
 
@@ -26,6 +26,7 @@ class Game:
     robot_color = int | None
 
     MARKER_RADIUS: int = 40  # all caps variable is a constant
+    MARKER_SPACING: int = 105
 
     def __init__(self, screen: pygame.Surface, *, width, height, against_computer, computer_color=0):
         """
@@ -41,7 +42,7 @@ class Game:
         self.height = height
         self.winner = None
 
-        self.field = np.zeros((self.height, self.width))
+        self.board = Board(field=None, width=self.width, height=self.height)
         self.current_player = 1
         self.buffered_input = (False, False, False)
 
@@ -53,7 +54,7 @@ class Game:
 
     def reset(self):
         pygame.display.set_caption(title="4-Gewinnt")
-        self.field = np.zeros((self.height, self.width))
+        self.board = Board(field=None, width=self.width, height=self.height)
         self.current_player = 1
         self.winner = None
 
@@ -61,9 +62,9 @@ class Game:
         self.screen.fill(color="blue")
         for x in range(self.width):
             for y in range(self.height):
-                color = 0xd0d1d1 if get_from_field(self.field, x, y) == 0 else "yellow" if get_from_field(self.field, x, y) == 1 else "red"
+                color = 0xd0d1d1 if self.board.get_from_field(x, y) == 0 else "yellow" if self.board.get_from_field(x, y) == 1 else "red"
                 pygame.draw.circle(self.screen, color,
-                                   (x * 105 + 55, y * 105 + 205), radius=self.MARKER_RADIUS)
+                                   (x * self.MARKER_SPACING + 55, y * self.MARKER_SPACING + 205), radius=self.MARKER_RADIUS)
 
         mouse_x, _ = pygame.mouse.get_pos()  # We don't care about y since we place the marker always on top
 
@@ -72,23 +73,9 @@ class Game:
         pygame.display.flip()
 
     def show_current_selected_position(self, mouse_x: int) -> None:
-        x = mouse_x // 105
+        x = mouse_x // self.MARKER_SPACING
         color = "yellow" if self.current_player == 1 else "red"
-        pygame.draw.circle(self.screen, color, (x * 105 + 55, 55), radius=self.MARKER_RADIUS)
-
-    def place_marker(self, x: int) -> bool:
-        """
-        :param x: x-index of the column
-        :return:  False if the placement was not successful due to a full column
-        """
-        if get_from_field(self.field, x, 0) != 0:
-            return False
-
-        for y in range(self.height):
-            y = 5 - y
-            if get_from_field(self.field, x, y) == 0:
-                set_in_field(self.field, x, y, self.current_player)
-                return True
+        pygame.draw.circle(self.screen, color, (x * self.MARKER_SPACING + 55, 55), radius=self.MARKER_RADIUS)
 
     def swap_player(self) -> None:
         self.current_player = 1 if self.current_player == 2 else 2
@@ -109,7 +96,7 @@ class Game:
                     sys.exit()
 
             if game_over:
-                if filled_fields(self.field) == 42:
+                if self.board.filled_fields() == 42:
                     pygame.display.set_caption(title="Unentschieden")
                 else:
                     self.winner = "Gelb" if self.current_player == 2 else "Rot"
@@ -138,10 +125,10 @@ class Game:
 
                     if mouse_buttons_pressed[0]:
                         mouse_x, _ = pygame.mouse.get_pos()
-                        if self.place_marker(mouse_x // 105):
+                        if self.board.place_marker(mouse_x // self.MARKER_SPACING, self.current_player):
                             self.swap_player()
 
-            game_over = is_game_over(self.field)
+            game_over = self.board.is_game_over()
             if game_over:
                 self.draw_field(show_cursor_position=False)
 
