@@ -22,7 +22,7 @@ class Board:
         """
         self.field.transpose()[x][y] = value
 
-    def get_from_field(self, x: int, y: int) -> int:
+    def get_from_field(self, x: int, y: int) -> np.ndarray:
         """
         :param x: x-coordinate
         :param y: y-coordinate

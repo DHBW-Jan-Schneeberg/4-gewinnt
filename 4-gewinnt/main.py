@@ -49,7 +49,7 @@ class Game:
         if against_computer and computer_color == 0:
             raise ValueError("Du kannst kein Spiel gegen den Computer starten, ohne ihm eine Farbe zu geben!")
 
-        self.robot_enemy = Computer() if against_computer else None
+        self.robot_enemy = Computer(board=self.board) if against_computer else None
         self.robot_color = computer_color if computer_color != 0 else None
 
     def reset(self) -> None:
@@ -113,11 +113,12 @@ class Game:
 
             # Hier beginnt tatsächlich so die "richtige" game loop
             if self.robot_enemy and self.current_player == self.robot_color:
-                # TODO
-                pygame.time.delay(int(3500 * random.random()))  # Player should feel as if the computer needs to "think"
-                # take move from computer
-                # play it
-                ...
+                pygame.time.delay(int(500 * random.randint(2, 5)))  # Player should feel as if the computer needs to "think"
+                robot_move = self.robot_enemy.calculate_move()
+
+                if self.board.place_marker(robot_move, self.current_player):
+                    self.swap_player()
+
             else:
                 mouse_buttons_pressed = pygame.mouse.get_pressed(3)
                 if mouse_buttons_pressed != self.buffered_input:
@@ -227,4 +228,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
