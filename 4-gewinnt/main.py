@@ -2,14 +2,9 @@ import random
 import sys
 
 import pygame
-import numpy as np
 
-
-class Computer:
-
-    # TODO
-
-    ...
+from computer import Computer
+from field_methods import *
 
 
 class Game:
@@ -62,34 +57,11 @@ class Game:
         self.current_player = 1
         self.winner = None
 
-    def set_in_field(self, x, y, value) -> None:
-        """
-        :param x: x-coordinate
-        :param y: y-coordinate
-        :param value: the value to be set at (x,y) on the field
-        """
-        self.field.transpose()[x][y] = value
-
-    def get_from_field(self, x, y) -> int:
-        """
-        :param x: x-coordinate
-        :param y: y-coordinate
-        :return: the value at (x,y) on the field
-        """
-        return self.field.transpose()[x][y]
-
-    def filled_fields(self) -> int:
-        """
-        TODO
-        :return:
-        """
-        return np.count_nonzero(self.field)
-
     def draw_field(self, show_cursor_position=True) -> None:
         self.screen.fill(color="blue")
         for x in range(self.width):
             for y in range(self.height):
-                color = 0xd0d1d1 if self.get_from_field(x, y) == 0 else "yellow" if self.get_from_field(x, y) == 1 else "red"
+                color = 0xd0d1d1 if get_from_field(self.field, x, y) == 0 else "yellow" if get_from_field(self.field, x, y) == 1 else "red"
                 pygame.draw.circle(self.screen, color,
                                    (x * 105 + 55, y * 105 + 205), radius=self.MARKER_RADIUS)
 
@@ -104,80 +76,18 @@ class Game:
         color = "yellow" if self.current_player == 1 else "red"
         pygame.draw.circle(self.screen, color, (x * 105 + 55, 55), radius=self.MARKER_RADIUS)
 
-    def is_4_straight_connected(self, x: int, y: int, *, horizontal: bool):
-        """
-        Checks for an x,y coordinate if there are 4 connected, same color markers in a straight line
-        :param x: x-coordinate
-        :param y: y-coordinate
-        :param horizontal: Boolean representing if the check should occur horizontal or vertical
-        :return: True if there are 4 connected, same color markers. False, if there are not
-        """
-        selection = [self.get_from_field(x + (i if horizontal else 0), y + (i if not horizontal else 0)) for i in range(4)]
-        if selection[0] == 0:  # Obviously we can't have 4 connected pieces if the first entry is empty
-            return False
-
-        for elem in selection:
-            if elem != selection[0]:
-                return False
-
-        return True
-
-    def is_4_diagonal_connected(self, x: int, y: int, *, high_to_low: bool):
-        """
-        Checks for an x,y coordinate if there are 4 connected, same color markers in a diagonal line
-        :param x: x-coordinate
-        :param y: y-coordinate
-        :param high_to_low: Boolean representing if the check should occur from upper-left to lower-right or lower-left to upper-right
-        :return: True if there are 4 connected, same color markers. False, if there are not
-        """
-        selection = [self.get_from_field(x + i, y + (i if not high_to_low else 3 - i)) for i in range(4)]
-
-        if selection[0] == 0:  # Obviously we can't have 4 connected pieces if the first entry is empty
-            return False
-
-        for elem in selection:
-            if elem != selection[0]:
-                return False
-
-        return True
-
-    def is_game_over(self) -> bool:
-        # Case 1: tie
-        if self.filled_fields() == 42:
-            return True
-
-        # Case 2: four in a row
-        for y in range(self.height):
-            for x in range(self.width - 3):
-                if self.is_4_straight_connected(x, y, horizontal=True):
-                    return True
-
-        # Case 3: four in a column
-        for y in range(self.height - 3):
-            for x in range(self.width):
-                if self.is_4_straight_connected(x, y, horizontal=False):
-                    return True
-
-        # Case 4: four diagonally
-        for x in range(self.width - 3):
-            for y in range(self.height - 3):
-                if self.is_4_diagonal_connected(x, y, high_to_low=True) or self.is_4_diagonal_connected(x, y, high_to_low=False):
-                    return True
-
-        return False
-
     def place_marker(self, x: int) -> bool:
         """
         :param x: x-index of the column
         :return:  False if the placement was not successful due to a full column
         """
-        if self.get_from_field(x, 0) != 0:
+        if get_from_field(self.field, x, 0) != 0:
             return False
 
         for y in range(self.height):
             y = 5 - y
-            if self.get_from_field(x, y) == 0:
-                self.set_in_field(x, y, self.current_player)
+            if get_from_field(self.field, x, y) == 0:
+                set_in_field(self.field, x, y, self.current_player)
                 return True
 
     def swap_player(self) -> None:
@@ -192,17 +102,17 @@ class Game:
 
         while True:
             # Limiting FPS and waiting on input, else the program gets "frozen"
-            self.clock.tick(20)
+            self.clock.tick(30)
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     sys.exit()
 
             if game_over:
-                if self.filled_fields() == 42:
-                    pygame.display.set_caption(title=("Unentschieden"))
+                if filled_fields(self.field) == 42:
+                    pygame.display.set_caption(title="Unentschieden")
                 else:
-                    self.winner = "Geld" if self.current_player == 2 else "Rot"
+                    self.winner = "Gelb" if self.current_player == 2 else "Rot"
                     pygame.display.set_caption(title=self.winner + " gewinnt")
 
                 if not play_again_button.clicked:
@@ -231,7 +141,7 @@ class Game:
                         if self.place_marker(mouse_x // 105):
                             self.swap_player()
 
-            game_over = self.is_game_over()
+            game_over = is_game_over(self.field)
             if game_over:
                 self.draw_field(show_cursor_position=False)
 
@@ -298,7 +208,7 @@ class OptionScreen:
 
     def await_input(self):
         while True:
-            self.clock.tick(10)
+            self.clock.tick(30)
             self.screen.fill(0x3333ff)
 
             for event in pygame.event.get():
