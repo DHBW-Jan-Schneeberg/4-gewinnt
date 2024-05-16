@@ -4,7 +4,7 @@ import numpy as np
 class Board:
     field: np.ndarray
 
-    def __init__(self, field: np.ndarray | None = None, *, width, height):
+    def __init__(self, field: np.ndarray | None = None, *, width: int | None = None, height: int | None = None):
         """
         Creates a new Board for a Game to be played at
         WARNING: width and height arguments are only to be used when field is None
@@ -14,7 +14,7 @@ class Board:
         """
         self.field = field if field is not None else np.zeros((height, width))
 
-    def set_in_field(self, x, y, value) -> None:
+    def set_in_field(self, x: int, y: int, value: int) -> None:
         """
         :param x: x-coordinate
         :param y: y-coordinate
@@ -22,7 +22,7 @@ class Board:
         """
         self.field.transpose()[x][y] = value
 
-    def get_from_field(self, x, y) -> int:
+    def get_from_field(self, x: int, y: int) -> int:
         """
         :param x: x-coordinate
         :param y: y-coordinate
@@ -45,8 +45,7 @@ class Board:
         :param horizontal: Boolean representing if the check should occur horizontal or vertical
         :return: True if there are 4 connected, same color markers. False, if there are not
         """
-        selection = tuple(
-            self.get_from_field(x + (i if horizontal else 0), y + (i if not horizontal else 0)) for i in range(4))
+        selection = tuple(self.get_from_field(x + (i if horizontal else 0), y + (i if not horizontal else 0)) for i in range(4))
         if selection[0] == 0:  # Obviously we can't have 4 connected pieces if the first entry is empty
             return False
 

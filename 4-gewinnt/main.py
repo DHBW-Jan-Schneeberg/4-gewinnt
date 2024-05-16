@@ -52,13 +52,13 @@ class Game:
         self.robot_enemy = Computer() if against_computer else None
         self.robot_color = computer_color if computer_color != 0 else None
 
-    def reset(self):
+    def reset(self) -> None:
         pygame.display.set_caption(title="4-Gewinnt")
         self.board = Board(field=None, width=self.width, height=self.height)
         self.current_player = 1
         self.winner = None
 
-    def draw_field(self, show_cursor_position=True) -> None:
+    def draw_field(self, show_cursor_position: bool = True) -> None:
         self.screen.fill(color="blue")
         for x in range(self.width):
             for y in range(self.height):
@@ -138,14 +138,14 @@ class Game:
                 self.draw_field(show_cursor_position=True)
 
 
-def start_game(*, against_computer: bool, computer_color: int | None = None):
+def start_game(*, against_computer: bool, computer_color: int | None = None) -> None:
     screen = pygame.display.set_mode((740, 785))
     game = Game(screen, width=7, height=6, against_computer=against_computer, computer_color=computer_color)
     game.start()
 
 
 class Button:
-    def __init__(self, x, y, width, height, text: str, screen: pygame.Surface):
+    def __init__(self, x: int, y: int, width: int, height: int, text: str, screen: pygame.Surface) -> None:
         self.x = x
         self.y = y
         self.width = width
@@ -163,7 +163,7 @@ class Button:
 
         self.buttonSurf = pygame.font.SysFont("Comic Sans MS", 30).render(text, True, (20, 20, 20))
 
-    def process(self):
+    def process(self) -> None:
         mouse_pos = pygame.mouse.get_pos()
         self.buttonSurface.fill(self.fillColors['normal'])
         if self.buttonRect.collidepoint(mouse_pos):
@@ -184,7 +184,7 @@ class OptionScreen:
 
     buttons: list[Button]
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.screen = pygame.display.set_mode((600, 350))
         self.clock = pygame.time.Clock()
 
@@ -193,7 +193,7 @@ class OptionScreen:
                         Button(35, 250, 530, 50, "Spiele gegen einen anderen Spieler", self.screen)
                         ]
 
-    def await_input(self):
+    def await_input(self) -> None:
         while True:
             self.clock.tick(30)
             self.screen.fill(0x3333ff)
@@ -219,7 +219,7 @@ class OptionScreen:
             pygame.display.flip()
 
 
-def main():
+def main() -> None:
     pygame.init()
     option_screen = OptionScreen()
     option_screen.await_input()
