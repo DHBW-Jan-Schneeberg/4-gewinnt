@@ -20,15 +20,15 @@ class Board:
         :param y: y-coordinate
         :param value: the value to be set at (x,y) on the field
         """
-        self.field.transpose()[x][y] = value
+        self.field[y][x] = value
 
-    def get_from_field(self, x: int, y: int) -> np.ndarray:
+    def get_from_field(self, x: int, y: int) -> int:
         """
         :param x: x-coordinate
         :param y: y-coordinate
         :return: the value at (x,y) on the field
         """
-        return self.field.transpose()[x][y]
+        return int(self.field[y][x])  # added explicit typecasting to fix pycharm warning
 
     def filled_fields(self) -> int:
         """

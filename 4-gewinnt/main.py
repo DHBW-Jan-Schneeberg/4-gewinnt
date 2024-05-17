@@ -22,13 +22,13 @@ class Game:
 
     buffered_input: tuple[bool, bool, bool]
 
-    robot_enemy: Computer | None
-    robot_color = int | None
+    computer_enemy: Computer | None
+    computer_color = int | None
 
     MARKER_RADIUS: int = 40  # all caps variable is a constant
     MARKER_SPACING: int = 105
 
-    def __init__(self, screen: pygame.Surface, *, width, height, against_computer, computer_color=0):
+    def __init__(self, screen: pygame.Surface, *, width, height, against_computer, computer_color=None):
         """
         :param screen: the surface to draw on
         :param width: the width of the screen
@@ -42,19 +42,18 @@ class Game:
         self.height = height
         self.winner = None
 
-        self.board = Board(field=None, width=self.width, height=self.height)
         self.current_player = 1
         self.buffered_input = (False, False, False)
 
         if against_computer and computer_color == 0:
             raise ValueError("Du kannst kein Spiel gegen den Computer starten, ohne ihm eine Farbe zu geben!")
 
-        self.robot_enemy = Computer(board=self.board) if against_computer else None
-        self.robot_color = computer_color if computer_color != 0 else None
+        self.computer_color = computer_color if computer_color else None
 
     def reset(self) -> None:
         pygame.display.set_caption(title="4-Gewinnt")
         self.board = Board(field=None, width=self.width, height=self.height)
+        self.computer_enemy = Computer(board=self.board, color=self.computer_color) if self.computer_color else None
         self.current_player = 1
         self.winner = None
 
@@ -112,9 +111,9 @@ class Game:
                 continue
 
             # Hier beginnt tatsächlich so die "richtige" game loop
-            if self.robot_enemy and self.current_player == self.robot_color:
-                pygame.time.delay(int(500 * random.randint(2, 5)))  # Player should feel as if the computer needs to "think"
-                robot_move = self.robot_enemy.calculate_move()
+            if self.computer_enemy and self.current_player == self.computer_color:
+                pygame.time.delay(int(100 * random.randint(2, 5)))  # Player should feel as if the computer needs to "think"
+                robot_move = self.computer_enemy.calculate_move()
 
                 if self.board.place_marker(robot_move, self.current_player):
                     self.swap_player()
