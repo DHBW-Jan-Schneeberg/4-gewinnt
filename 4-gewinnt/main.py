@@ -87,7 +87,8 @@ class Game:
         self.reset()
         self.draw_field()
 
-        play_again_button = Button(268, 50, 249, 60, "Erneut spielen", self.screen)
+        play_again_button = Button(100, 50, 239, 60, "Erneut spielen", self.screen)
+        return_button = Button(400, 50, 290, 60, "Spielmodus wählen", self.screen)
         game_over = False
         winner_code = -1
 
@@ -106,16 +107,24 @@ class Game:
                     self.winner = "Gelb" if winner_code == 1 else "Rot"
                     pygame.display.set_caption(title=self.winner + " gewinnt")
 
-                if not play_again_button.clicked:
+                # Case 1: game is running
+                if not play_again_button.clicked and not return_button.clicked:
                     play_again_button.process()
+                    return_button.process()
                     pygame.display.flip()
-                else:
+                # Case 2: Play another round
+                elif play_again_button.clicked:
                     self.reset()
                     play_again_button.clicked = False
                     game_over = False
+                # Case 3: Get back to modus menu
+                else:
+                    option_screen = OptionScreen()
+                    option_screen.await_input()
+                    return_button = False
                 continue
 
-            # Hier beginnt tatsächlich so die "richtige" game loop
+            # Here starts the "real" game loop
             if self.computer_enemy and self.current_player == self.computer_color:
                 pygame.time.delay(int(100 * random.randint(2, 5)))  # Player should feel as if the computer needs to "think"
                 robot_move = self.computer_enemy.calculate_move()
