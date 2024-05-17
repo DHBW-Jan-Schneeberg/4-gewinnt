@@ -64,30 +64,32 @@ class Board:
 
         return True
 
-    def is_game_over(self) -> bool:
+    def is_game_over(self) -> tuple[bool, int]:
         # Case 1: tie
         if self.filled_fields() == 42:
-            return True
+            return True, 0
 
         # Case 2: four in a row
-        for y in range(len(self)):
-            for x in range(len(self[0]) - 3):
+        for y in range(6):
+            for x in range(4):
                 if self.is_4_straight_connected(x, y, horizontal=True):
-                    return True
+                    return True, self[x][y]
 
         # Case 3: four in a column
-        for y in range(len(self) - 3):
-            for x in range(len(self[0])):
+        for y in range(3):
+            for x in range(7):
                 if self.is_4_straight_connected(x, y, horizontal=False):
-                    return True
+                    return True, self[x][y]
 
         # Case 4: four diagonally
-        for x in range(len(self[0]) - 3):
-            for y in range(len(self) - 3):
-                if self.is_4_diagonal_connected(x, y, high_to_low=True) or self.is_4_diagonal_connected(x, y, high_to_low=False):
-                    return True
+        for x in range(4):
+            for y in range(3):
+                if self.is_4_diagonal_connected(x, y, high_to_low=False):
+                    return True, self[x][y]
+                elif self.is_4_diagonal_connected(x, y, high_to_low=True):
+                    return True, self[x][y+3]
 
-        return False
+        return False, -1
 
     def place_marker(self, x: int, player: int) -> bool:
         """

@@ -68,11 +68,15 @@ class Game:
         mouse_x, _ = pygame.mouse.get_pos()  # We don't care about y since we place the marker always on top
 
         if show_cursor_position:
-            self.show_current_selected_position(mouse_x)
+            if self.computer_enemy and self.current_player == self.computer_color:
+                # need to somehow display the action the computer is going to take
+                # (optional)
+                ...
+            else:
+                self.show_current_selected_position(mouse_x // self.MARKER_SPACING)
         pygame.display.flip()
 
-    def show_current_selected_position(self, mouse_x: int) -> None:
-        x = mouse_x // self.MARKER_SPACING
+    def show_current_selected_position(self, x: int) -> None:
         color = "yellow" if self.current_player == 1 else "red"
         pygame.draw.circle(self.screen, color, (x * self.MARKER_SPACING + 55, 55), radius=self.MARKER_RADIUS)
 
@@ -85,6 +89,7 @@ class Game:
 
         play_again_button = Button(268, 50, 249, 60, "Erneut spielen", self.screen)
         game_over = False
+        winner_code = -1
 
         while True:
             # Limiting FPS and waiting on input, else the program gets "frozen"
@@ -95,10 +100,10 @@ class Game:
                     sys.exit()
 
             if game_over:
-                if self.board.filled_fields() == 42:
+                if winner_code == 0:
                     pygame.display.set_caption(title="Unentschieden")
                 else:
-                    self.winner = "Gelb" if self.current_player == 2 else "Rot"
+                    self.winner = "Gelb" if winner_code == 1 else "Rot"
                     pygame.display.set_caption(title=self.winner + " gewinnt")
 
                 if not play_again_button.clicked:
@@ -128,7 +133,7 @@ class Game:
                         if self.board.place_marker(mouse_x // self.MARKER_SPACING, self.current_player):
                             self.swap_player()
 
-            game_over = self.board.is_game_over()
+            game_over, winner_code = self.board.is_game_over()
             if game_over:
                 self.draw_field(show_cursor_position=False)
 
@@ -194,6 +199,7 @@ class OptionScreen:
                         ]
 
     def await_input(self) -> None:
+        pygame.display.set_caption("Spielmodus auswählen")
         while True:
             self.clock.tick(30)
             self.screen.fill(0x3333ff)
