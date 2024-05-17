@@ -61,7 +61,7 @@ class Game:
         self.screen.fill(color="blue")
         for x in range(self.width):
             for y in range(self.height):
-                color = 0xd0d1d1 if self.board.get_from_field(x, y) == 0 else "yellow" if self.board.get_from_field(x, y) == 1 else "red"
+                color = 0xd0d1d1 if self.board[x][y] == 0 else "yellow" if self.board[x][y] == 1 else "red"
                 pygame.draw.circle(self.screen, color,
                                    (x * self.MARKER_SPACING + 55, y * self.MARKER_SPACING + 205), radius=self.MARKER_RADIUS)
 
