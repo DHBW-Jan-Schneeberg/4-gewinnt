@@ -1,7 +1,3 @@
-import random
-
-import numpy as np
-
 from board import Board
 
 
@@ -11,58 +7,79 @@ def eval_field(board: Board) -> int:
     :param board:
     :return: an EVALUATION of the board position
     """
-    return 43 - board.filled_fields()
+    return 42 - board.filled_fields()
+
+
+def minimax(board: Board, maximize: bool, alpha: int, beta: int) -> int:
+    game_over, winner = board.is_game_over()
+    if game_over:
+        if winner == 0:
+            return 0
+        else:
+            return eval_field(board) * (1 if winner == 1 else -1)
+
+    if maximize:
+        max_eval = -42
+        for move in board.get_possible_moves():
+            next_board = Board(board.field.copy())
+            next_board.place_marker(move)
+            score = minimax(board=next_board, maximize=False, alpha=alpha, beta=beta)
+            max_eval = max(max_eval, score)
+            alpha = max(alpha, score)
+            if beta <= alpha:
+                break
+        return max_eval
+    else:
+        min_eval = 42
+        for move in board.get_possible_moves():
+            next_board = Board(board.field.copy())
+            next_board.place_marker(move)
+            score = minimax(board=next_board, maximize=True, alpha=alpha, beta=beta)
+            min_eval = min(min_eval, score)
+            beta = min(beta, score)
+            if beta <= alpha:
+                break
+        return min_eval
 
 
 class Computer:
     board: Board
     color: int
 
-    bitboard: dict[np.ndarray, int]
-
     def __init__(self, board: Board, color):
         self.board = board
         self.color = color
 
-        self.bitboard = {}
-
     def calculate_move(self) -> int:
-        move_evaluations = []
-        for move in range(7):
-            next_board = Board(self.board.field.copy())
-            move_evaluations.append(self.minimax(next_board, self.color == 1))
-        print(move_evaluations)
-        return move_evaluations.index(max(move_evaluations))
+        should_maximize = True if self.color == 1 else False
+        best_move = None
 
-    def minimax(self, board: Board, maximize: bool) -> int:
-        """
-
-        :param maximize:
-        :param board:
-        :return:
-        """
-        #if board.field in self.bitboard.keys():
-        #    return self.bitboard[board.field]
-
-        if board.is_game_over()[0]:
-            return eval_field(board)
-
-        if maximize:
-            max_eval = float("-inf")
-            for move in range(7):
-                next_board = Board(board.field.copy())
-                could_place = next_board.place_marker(move, 1)
-                if could_place:
-                    max_eval = max(max_eval, self.minimax(next_board, False))
-            return max_eval
+        if should_maximize:
+            max_score = -42
+            for move in self.board.get_possible_moves():
+                next_board = Board(self.board.field.copy())
+                next_board.place_marker(move)
+                score = minimax(board=next_board, maximize=False, alpha=42, beta=-42)
+                if score > max_score:
+                    max_score = score
+                    best_move = move
+                print(f"{move=} {score=}")
+                print("Resulting board:\n", next_board.field)
+            print("=========================\n=========================")
         else:
-            min_eval = float("+inf")
-            for move in range(7):
-                next_board = Board(board.field.copy())
-                could_place = next_board.place_marker(move, 2)
-                if could_place:
-                    min_eval = min(min_eval, self.minimax(next_board, True))
-            return min_eval
+            min_score = 42
+            for move in self.board.get_possible_moves():
+                next_board = Board(self.board.field.copy())
+                next_board.place_marker(move)
+                score = minimax(board=next_board, maximize=True, alpha=42, beta=-42)
+                if score < min_score:
+                    min_score = score
+                    best_move = move
+                print(f"{move=} {score=}")
+                print("Resulting board:\n", next_board.field)
+            print("=========================\n=========================")
+
+        return best_move
 
     # Idee: Maussimulation, damit sich der Cursor über dem Spielfeld zur richtigen Position bewegt, bevor gesetzt wird
     def simulate_mouse_movement(self) -> None:

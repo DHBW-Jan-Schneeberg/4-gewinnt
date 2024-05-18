@@ -42,7 +42,6 @@ class Game:
         self.height = height
         self.winner = None
 
-        self.current_player = 1
         self.buffered_input = (False, False, False)
 
         if against_computer and computer_color == 0:
@@ -50,11 +49,14 @@ class Game:
 
         self.computer_color = computer_color if computer_color else None
 
+    @property
+    def current_player(self):
+        return 1 if self.board.filled_fields() % 2 == 0 else 2
+
     def reset(self) -> None:
         pygame.display.set_caption(title="4-Gewinnt")
         self.board = Board(field=None, width=self.width, height=self.height)
         self.computer_enemy = Computer(board=self.board, color=self.computer_color) if self.computer_color else None
-        self.current_player = 1
         self.winner = None
 
     def draw_field(self, show_cursor_position: bool = True) -> None:
@@ -79,9 +81,6 @@ class Game:
     def show_current_selected_position(self, x: int) -> None:
         color = "yellow" if self.current_player == 1 else "red"
         pygame.draw.circle(self.screen, color, (x * self.MARKER_SPACING + 55, 55), radius=self.MARKER_RADIUS)
-
-    def swap_player(self) -> None:
-        self.current_player = 1 if self.current_player == 2 else 2
 
     def start(self) -> None:
         self.reset()
@@ -129,9 +128,7 @@ class Game:
                 pygame.time.delay(int(100 * random.randint(2, 5)))  # Player should feel as if the computer needs to "think"
                 robot_move = self.computer_enemy.calculate_move()
 
-                if self.board.place_marker(robot_move, self.current_player):
-                    self.swap_player()
-
+                self.board.place_marker(robot_move)
             else:
                 mouse_buttons_pressed = pygame.mouse.get_pressed(3)
                 if mouse_buttons_pressed != self.buffered_input:
@@ -139,8 +136,9 @@ class Game:
 
                     if mouse_buttons_pressed[0]:
                         mouse_x, _ = pygame.mouse.get_pos()
-                        if self.board.place_marker(mouse_x // self.MARKER_SPACING, self.current_player):
-                            self.swap_player()
+                        x = mouse_x // self.MARKER_SPACING
+                        if self.board.can_play(x):
+                            self.board.place_marker(x)
 
             game_over, winner_code = self.board.is_game_over()
             if game_over:

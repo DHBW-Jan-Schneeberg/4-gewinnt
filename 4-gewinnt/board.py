@@ -91,17 +91,23 @@ class Board:
 
         return False, -1
 
-    def place_marker(self, x: int, player: int) -> bool:
+    def can_play(self, x: int) -> bool:
+        if self[x][0] != 0:
+            return False
+        return True
+
+    def place_marker(self, x: int) -> None:
         """
-        :param player:
         :param x: x-index of the column
         :return:  False if the placement was not successful due to a full column
         """
-        if self[x][0] != 0:
-            return False
-
+        if not self.can_play(x):
+            raise ValueError("Das hätte nicht passieren dürfen")
         for y in range(len(self.field)):
             y = 5 - y
             if self[x][y] == 0:
-                self[x][y] = player
-                return True
+                self[x][y] = 1 if self.filled_fields() % 2 == 0 else 2
+                return
+
+    def get_possible_moves(self) -> list[int]:
+        return [move for move in range(7) if self.can_play(move)]
