@@ -59,7 +59,7 @@ class Computer:
             for move in self.board.get_possible_moves():
                 next_board = Board(self.board.field.copy())
                 next_board.place_marker(move)
-                score = minimax(board=next_board, maximize=False, alpha=42, beta=-42)
+                score = minimax(board=next_board, maximize=False, alpha=-42, beta=42)
                 if score > max_score:
                     max_score = score
                     best_move = move

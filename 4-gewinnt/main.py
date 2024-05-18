@@ -1,5 +1,6 @@
 import random
 import sys
+from typing import Optional
 
 import pygame
 
@@ -14,7 +15,7 @@ class Game:
 
     board: Board
     current_player: int  # 1 for Yellow, 2 for Red
-    winner: str | None
+    winner: Optional[str]
 
     width: int
     height: int
@@ -22,8 +23,8 @@ class Game:
 
     buffered_input: tuple[bool, bool, bool]
 
-    computer_enemy: Computer | None
-    computer_color = int | None
+    computer_enemy: Optional[Computer]
+    computer_color = Optional[int]
 
     MARKER_RADIUS: int = 40  # all caps variable is a constant
     MARKER_SPACING: int = 105
@@ -79,6 +80,11 @@ class Game:
         pygame.display.flip()
 
     def show_current_selected_position(self, x: int) -> None:
+        """
+        Renders a circle
+        :param x: x-index of the column
+        :return: None
+        """
         color = "yellow" if self.current_player == 1 else "red"
         pygame.draw.circle(self.screen, color, (x * self.MARKER_SPACING + 55, 55), radius=self.MARKER_RADIUS)
 
@@ -150,7 +156,7 @@ class Game:
                 self.draw_field(show_cursor_position=True)
 
 
-def start_game(*, against_computer: bool, computer_color: int | None = None) -> None:
+def start_game(*, against_computer: bool, computer_color: Optional[int] = None) -> None:
     screen = pygame.display.set_mode((740, 785))
     game = Game(screen, width=7, height=6, against_computer=against_computer, computer_color=computer_color)
     game.start()

@@ -1,10 +1,10 @@
 import numpy as np
 
-
+from typing import Optional
 class Board:
     field: np.ndarray
 
-    def __init__(self, field: np.ndarray | None = None, *, width: int | None = None, height: int | None = None):
+    def __init__(self, field: Optional[np.ndarray] = None, *, width: Optional[int] = None, height: Optional[int] = None):
         """
         Creates a new Board for a Game to be played at
         WARNING: width and height arguments are only to be used when field is None
@@ -14,20 +14,20 @@ class Board:
         """
         self.field = field if field is not None else np.zeros((height, width))
 
-    def __getitem__(self, item):
+    def __getitem__(self, item: int) -> np.ndarray:
         return self.field.transpose()[item]
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.field)
 
     def filled_fields(self) -> int:
         """
-        TODO
-        :return:
+        Returns the number of filled fields on the board
+        :return: int
         """
         return np.count_nonzero(self.field)
 
-    def is_4_straight_connected(self, x: int, y: int, *, horizontal: bool):
+    def is_4_straight_connected(self, x: int, y: int, *, horizontal: bool) -> bool:
         """
         Checks for an x,y coordinate if there are 4 connected, same color markers in a straight line
         :param x: x-coordinate
@@ -45,7 +45,7 @@ class Board:
 
         return True
 
-    def is_4_diagonal_connected(self, x: int, y: int, *, high_to_low: bool):
+    def is_4_diagonal_connected(self, x: int, y: int, *, high_to_low: bool) -> bool:
         """
         Checks for an x,y coordinate if there are 4 connected, same color markers in a diagonal line
         :param x: x-coordinate
@@ -92,6 +92,11 @@ class Board:
         return False, -1
 
     def can_play(self, x: int) -> bool:
+        """
+        Checks if a marker can be placed in column x
+        :param x: x-index of the column
+        :return: True if a marker can be placed, False otherwise
+        """
         if self[x][0] != 0:
             return False
         return True
@@ -99,10 +104,11 @@ class Board:
     def place_marker(self, x: int) -> None:
         """
         :param x: x-index of the column
-        :return:  False if the placement was not successful due to a full column
+        :return: None
+        :raises ValueError: if the column is full
         """
         if not self.can_play(x):
-            raise ValueError("Das hätte nicht passieren dürfen")
+            raise ValueError("Cannot place marker because the column is full")
         for y in range(len(self.field)):
             y = 5 - y
             if self[x][y] == 0:
@@ -110,4 +116,8 @@ class Board:
                 return
 
     def get_possible_moves(self) -> list[int]:
+        """
+        Returns a list of possible columns where a marker can be placed
+        :return: List of column indices
+        """
         return [move for move in range(7) if self.can_play(move)]
