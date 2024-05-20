@@ -73,7 +73,7 @@ class Board:
 
         return True
 
-    def is_game_over(self) -> tuple[bool, int]:
+    def is_game_over(self) -> tuple[bool, int | np.ndarray]:
         # Case 1: tie
         upper_row = [self[x][0] for x in range(7)]
         if 0 not in upper_row:
