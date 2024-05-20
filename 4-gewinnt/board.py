@@ -1,6 +1,8 @@
 import numpy as np
 
 from typing import Optional
+
+
 class Board:
     field: np.ndarray
     latest_move_x: int
@@ -36,7 +38,7 @@ class Board:
         """
         return np.count_nonzero(self.field)
 
-    def is_4_straight_connected(self, x: int, y: int, *, horizontal: bool) -> bool:
+    def is_4_straight_connected(self, x: int, y: int, *, horizontal: bool) -> tuple[bool, tuple]:
         """
         Checks for an x,y coordinate if there are 4 connected, same color markers in a straight line
         :param x: x-coordinate
@@ -46,15 +48,15 @@ class Board:
         """
         selection = tuple(self[x + (i if horizontal else 0)][y + (i if not horizontal else 0)] for i in range(4))
         if selection[0] == 0:  # Obviously we can't have 4 connected pieces if the first entry is empty
-            return False
+            return False, selection
 
         for elem in selection:
             if elem != selection[0]:
-                return False
+                return False, selection
 
-        return True
+        return True, selection
 
-    def is_4_diagonal_connected(self, x: int, y: int, *, high_to_low: bool) -> bool:
+    def is_4_diagonal_connected(self, x: int, y: int, *, high_to_low: bool) -> tuple[bool, tuple]:
         """
         Checks for an x,y coordinate if there are 4 connected, same color markers in a diagonal line
         :param x: x-coordinate
@@ -65,13 +67,13 @@ class Board:
         selection = tuple(self[x + i][y + (i if not high_to_low else 3 - i)] for i in range(4))
 
         if selection[0] == 0:  # Obviously we can't have 4 connected pieces if the first entry is empty
-            return False
+            return False, selection
 
         for elem in selection:
             if elem != selection[0]:
-                return False
+                return False, selection
 
-        return True
+        return True, selection
 
     def is_game_over(self) -> tuple[bool, int | np.ndarray]:
         # Case 1: tie
@@ -82,20 +84,20 @@ class Board:
         # Case 2: four in a row
         # todo explain the max() thing
         for x in range(max(0, self.latest_move_x - 3), 4):
-            if self.is_4_straight_connected(x, self.latest_move_y, horizontal=True):
+            if self.is_4_straight_connected(x, self.latest_move_y, horizontal=True)[0]:
                 return True, self[x][self.latest_move_y]
 
         # Case 3: four in a column
         # todo explain why we dont loop
-        if self.latest_move_y <= 2 and self.is_4_straight_connected(self.latest_move_x, self.latest_move_y, horizontal=False):
+        if self.latest_move_y <= 2 and self.is_4_straight_connected(self.latest_move_x, self.latest_move_y, horizontal=False)[0]:
             return True, self[self.latest_move_x][self.latest_move_y]
 
         # Case 4: four diagonally
         for x in range(4):
             for y in range(3):
-                if self.is_4_diagonal_connected(x, y, high_to_low=False):
+                if self.is_4_diagonal_connected(x, y, high_to_low=False)[0]:
                     return True, self[x][y]
-                elif self.is_4_diagonal_connected(x, y, high_to_low=True):
+                elif self.is_4_diagonal_connected(x, y, high_to_low=True)[0]:
                     return True, self[x][y+3]
 
         return False, -1

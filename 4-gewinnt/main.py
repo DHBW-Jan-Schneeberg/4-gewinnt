@@ -24,7 +24,8 @@ class Game:
     buffered_input: tuple[bool, bool, bool]
 
     computer_enemy: Optional[Computer]
-    computer_color = Optional[int]
+    computer_color: Optional[int]
+    robot_move: int
 
     MARKER_RADIUS: int = 40  # all caps variable is a constant
     MARKER_SPACING: int = 105
@@ -49,6 +50,7 @@ class Game:
             raise ValueError("Du kannst kein Spiel gegen den Computer starten, ohne ihm eine Farbe zu geben!")
 
         self.computer_color = computer_color if computer_color else None
+        self.robot_move = None
 
     @property
     def current_player(self):
@@ -131,8 +133,9 @@ class Game:
 
             # Here starts the "real" game loop
             if self.computer_enemy and self.current_player == self.computer_color:
-                robot_move = self.computer_enemy.calculate_move()
-                self.board.place_marker(robot_move)
+                self.draw_field()
+                self.robot_move = self.computer_enemy.calculate_move()
+                self.board.place_marker(self.robot_move)
             else:
                 mouse_buttons_pressed = pygame.mouse.get_pressed(3)
                 if mouse_buttons_pressed != self.buffered_input:

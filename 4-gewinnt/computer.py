@@ -1,16 +1,4 @@
-from typing import Optional
-
 from board import Board
-
-
-def eval_field(board: Board) -> int:
-    """
-    Calculates the evaluation of the current board
-    :param board:
-    :return: an EVALUATION of the board position
-    """
-    return 42 - board.filled_fields()
-
 
 def find_wins(board: Board, depth: int):
     game_over, winner = board.is_game_over()
@@ -50,12 +38,12 @@ class Computer:
             if winner == 0:
                 return 0
             else:
-                score = eval_field(board) * (1 if winner == 1 else -1)
+                score = 50 * (1 if winner == 1 else -1)
                 if board not in self.bitboard.keys():
                     self.bitboard[board] = score
                 return self.bitboard[board]
         elif depth == 0:
-            return eval_field(board)
+            return self.eval_field(board)
 
         if board in self.bitboard.keys():
             print("hit", len(self.bitboard))
@@ -93,7 +81,7 @@ class Computer:
             for move in self.board.get_possible_moves():
                 next_board = Board(self.board.field.copy())
                 next_board.place_marker(move)
-                score = self.minimax(board=next_board, maximize=False, alpha=-42, beta=42, depth=6)
+                score = self.minimax(board=next_board, maximize=False, alpha=-42, beta=42, depth=5)
                 if score > max_score:
                     max_score = score
                     best_move = move
@@ -105,7 +93,7 @@ class Computer:
             for move in self.board.get_possible_moves():
                 next_board = Board(self.board.field.copy())
                 next_board.place_marker(move)
-                score = self.minimax(board=next_board, maximize=True, alpha=-42, beta=42, depth=6)
+                score = self.minimax(board=next_board, maximize=True, alpha=-42, beta=42, depth=5)
                 if score < min_score:
                     min_score = score
                     best_move = move
@@ -115,10 +103,57 @@ class Computer:
 
         return best_move
 
-    # Idee: Maussimulation, damit sich der Cursor über dem Spielfeld zur richtigen Position bewegt, bevor gesetzt wird
-    def simulate_mouse_movement(self) -> None:
-        while True:
-            ...
+    def eval_field(self, board: Board) -> int:
+        """
+        Calculates the evaluation of the current board
+        :param board:
+        :return: an EVALUATION of the board position
+        """
+        score = 0
+
+        # Scenario 1: four in a row
+        for y in range(6):
+            for x in range(4):
+                score += self.eval_player_position(board.is_4_straight_connected(x, y, horizontal=True)[1])
+
+        # Scenario 2: four in a column
+        for y in range(3):
+            for x in range(7):
+                score += self.eval_player_position(board.is_4_straight_connected(x, y, horizontal=False)[1])
+
+        # Scenario 3: four diagonally
+        for x in range(4):
+            for y in range(3):
+                score += self.eval_player_position(board.is_4_diagonal_connected(x, y, high_to_low=False)[1])
+                score += self.eval_player_position(board.is_4_diagonal_connected(x, y, high_to_low=True)[1])
+
+        print(f"Score: {score}")
+
+        return score
+
+    def eval_player_position(self, board_slice: tuple) -> int:
+        should_maximize = True if self.color == 1 else False
+        score = 0
+
+        if should_maximize:
+            if board_slice.count(self.color) == 3 and board_slice.count(0) == 1:
+                score += 3
+            elif board_slice.count(self.color) == 2 and board_slice.count(0) == 2:
+                score += 2
+
+            if board_slice.count(1 if self.color == 2 else 2) == 3 and board_slice.count(0) == 1:
+                score -= 4
+
+        else:
+            if board_slice.count(self.color) == 3 and board_slice.count(0) == 1:
+                score -= 3
+            elif board_slice.count(self.color) == 2 and board_slice.count(0) == 2:
+                score -= 2
+
+            if board_slice.count(1 if self.color == 2 else 2) == 3 and board_slice.count(0) == 1:
+                score += 4
+
+        return score
 
 
 """
