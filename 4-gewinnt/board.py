@@ -3,6 +3,8 @@ import numpy as np
 from typing import Optional
 class Board:
     field: np.ndarray
+    latest_move_x: int
+    latest_move_y: int
 
     def __init__(self, field: Optional[np.ndarray] = None, *, width: Optional[int] = None, height: Optional[int] = None):
         """
@@ -13,6 +15,10 @@ class Board:
         :param height: height of the field
         """
         self.field = field if field is not None else np.zeros((height, width))
+        self.latest_move_x, self.latest_move_y = 0, 0
+
+    def __repr__(self):
+        return str(self.field)
 
     def __getitem__(self, item: int) -> np.ndarray:
         return self.field.transpose()[item]
@@ -66,20 +72,20 @@ class Board:
 
     def is_game_over(self) -> tuple[bool, int]:
         # Case 1: tie
-        if self.filled_fields() == 42:
+        upper_row = [self[x][0] for x in range(7)]
+        if 0 not in upper_row:
             return True, 0
 
         # Case 2: four in a row
-        for y in range(6):
-            for x in range(4):
-                if self.is_4_straight_connected(x, y, horizontal=True):
-                    return True, self[x][y]
+        # todo explain the max() thing
+        for x in range(max(0, self.latest_move_x - 3), 4):
+            if self.is_4_straight_connected(x, self.latest_move_y, horizontal=True):
+                return True, self[x][self.latest_move_y]
 
         # Case 3: four in a column
-        for y in range(3):
-            for x in range(7):
-                if self.is_4_straight_connected(x, y, horizontal=False):
-                    return True, self[x][y]
+        # todo explain why we dont loop
+        if self.latest_move_y <= 2 and self.is_4_straight_connected(self.latest_move_x, self.latest_move_y, horizontal=False):
+            return True, self[self.latest_move_x][self.latest_move_y]
 
         # Case 4: four diagonally
         for x in range(4):
@@ -113,6 +119,7 @@ class Board:
             y = 5 - y
             if self[x][y] == 0:
                 self[x][y] = 1 if self.filled_fields() % 2 == 0 else 2
+                self.latest_move_x, self.latest_move_y = x, y
                 return
 
     def get_possible_moves(self) -> list[int]:

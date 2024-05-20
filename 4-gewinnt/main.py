@@ -131,9 +131,7 @@ class Game:
 
             # Here starts the "real" game loop
             if self.computer_enemy and self.current_player == self.computer_color:
-                pygame.time.delay(int(100 * random.randint(2, 5)))  # Player should feel as if the computer needs to "think"
                 robot_move = self.computer_enemy.calculate_move()
-
                 self.board.place_marker(robot_move)
             else:
                 mouse_buttons_pressed = pygame.mouse.get_pressed(3)

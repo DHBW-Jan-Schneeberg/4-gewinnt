@@ -1,3 +1,5 @@
+from typing import Optional
+
 from board import Board
 
 
@@ -42,6 +44,25 @@ def minimax(board: Board, maximize: bool, alpha: int, beta: int) -> int:
         return min_eval
 
 
+def find_wins(board: Board, depth: int):
+    game_over, winner = board.is_game_over()
+    if game_over:
+        if winner == 0:
+            print("Draw:\n", board)
+            return
+        else:
+            print("Win" if winner == 1 else "Lose\n", board)
+            return
+
+    if depth == 0:
+        return
+
+    for move in board.get_possible_moves():
+        next_board = Board(board.field.copy())
+        next_board.place_marker(move)
+        find_wins(board=next_board, depth=depth-1)
+
+
 class Computer:
     board: Board
     color: int
@@ -71,7 +92,7 @@ class Computer:
             for move in self.board.get_possible_moves():
                 next_board = Board(self.board.field.copy())
                 next_board.place_marker(move)
-                score = minimax(board=next_board, maximize=True, alpha=42, beta=-42)
+                score = minimax(board=next_board, maximize=True, alpha=-42, beta=42)
                 if score < min_score:
                     min_score = score
                     best_move = move

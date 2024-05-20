@@ -3,15 +3,10 @@ import numpy as np
 
 from board import Board
 from computer import Computer
+from computer import find_wins
 
-board_with_clear_best_move = Board(np.zeros((6, 7)))
-board_with_clear_best_move.place_marker(1)
-board_with_clear_best_move.place_marker(2)
-board_with_clear_best_move.place_marker(1)
-board_with_clear_best_move.place_marker(2)
-board_with_clear_best_move.place_marker(1)
-board_with_clear_best_move.place_marker(2)
-board_with_clear_best_move.place_marker(1)
+board = Board(np.zeros((6, 7)))
 
-comp = Computer(board=board_with_clear_best_move, color=1)
-print(comp.calculate_move())  # alright, we know the base case works. fucking amazing
+comp = Computer(board=board, color=1)
+print("Finding wins")
+find_wins(board, depth=7)
