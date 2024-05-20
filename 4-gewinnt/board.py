@@ -20,6 +20,9 @@ class Board:
     def __repr__(self):
         return str(self.field)
 
+    def __hash__(self):
+        return int("".join(str(int(x)) for row in self.field for x in row), base=3)
+
     def __getitem__(self, item: int) -> np.ndarray:
         return self.field.transpose()[item]
 

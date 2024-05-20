@@ -12,38 +12,6 @@ def eval_field(board: Board) -> int:
     return 42 - board.filled_fields()
 
 
-def minimax(board: Board, maximize: bool, alpha: int, beta: int) -> int:
-    game_over, winner = board.is_game_over()
-    if game_over:
-        if winner == 0:
-            return 0
-        else:
-            return eval_field(board) * (1 if winner == 1 else -1)
-
-    if maximize:
-        max_eval = -42
-        for move in board.get_possible_moves():
-            next_board = Board(board.field.copy())
-            next_board.place_marker(move)
-            score = minimax(board=next_board, maximize=False, alpha=alpha, beta=beta)
-            max_eval = max(max_eval, score)
-            alpha = max(alpha, score)
-            if beta <= alpha:
-                break
-        return max_eval
-    else:
-        min_eval = 42
-        for move in board.get_possible_moves():
-            next_board = Board(board.field.copy())
-            next_board.place_marker(move)
-            score = minimax(board=next_board, maximize=True, alpha=alpha, beta=beta)
-            min_eval = min(min_eval, score)
-            beta = min(beta, score)
-            if beta <= alpha:
-                break
-        return min_eval
-
-
 def find_wins(board: Board, depth: int):
     game_over, winner = board.is_game_over()
     if game_over:
@@ -67,9 +35,52 @@ class Computer:
     board: Board
     color: int
 
+    bitboard: dict[Board, int]
+
     def __init__(self, board: Board, color):
         self.board = board
         self.color = color
+
+        self.bitboard = dict()
+
+    def minimax(self, board: Board, maximize: bool, alpha: int, beta: int) -> int:
+        game_over, winner = board.is_game_over()
+        if game_over:
+            print(len(self.bitboard))
+            if winner == 0:
+                return 0
+            else:
+                score = eval_field(board) * (1 if winner == 1 else -1)
+                if board not in self.bitboard.keys():
+                    self.bitboard[board] = score
+                return self.bitboard[board]
+
+        if board in self.bitboard.keys():
+            print("hit", len(self.bitboard))
+            return self.bitboard[board]
+
+        if maximize:
+            max_eval = -42
+            for move in board.get_possible_moves():
+                next_board = Board(board.field.copy())
+                next_board.place_marker(move)
+                score = self.bitboard[next_board] if next_board in self.bitboard.keys() else self.minimax(board=next_board, maximize=False, alpha=alpha, beta=beta)
+                max_eval = max(max_eval, score)
+                alpha = max(alpha, score)
+                if beta <= alpha:
+                    break
+            return max_eval
+        else:
+            min_eval = 42
+            for move in board.get_possible_moves():
+                next_board = Board(board.field.copy())
+                next_board.place_marker(move)
+                score = self.bitboard[next_board] if next_board in self.bitboard.keys() else self.minimax(board=next_board, maximize=True, alpha=alpha, beta=beta)
+                min_eval = min(min_eval, score)
+                beta = min(beta, score)
+                if beta <= alpha:
+                    break
+            return min_eval
 
     def calculate_move(self) -> int:
         should_maximize = True if self.color == 1 else False
@@ -80,7 +91,7 @@ class Computer:
             for move in self.board.get_possible_moves():
                 next_board = Board(self.board.field.copy())
                 next_board.place_marker(move)
-                score = minimax(board=next_board, maximize=False, alpha=-42, beta=42)
+                score = self.minimax(board=next_board, maximize=False, alpha=-42, beta=42)
                 if score > max_score:
                     max_score = score
                     best_move = move
@@ -92,7 +103,7 @@ class Computer:
             for move in self.board.get_possible_moves():
                 next_board = Board(self.board.field.copy())
                 next_board.place_marker(move)
-                score = minimax(board=next_board, maximize=True, alpha=-42, beta=42)
+                score = self.minimax(board=next_board, maximize=True, alpha=-42, beta=42)
                 if score < min_score:
                     min_score = score
                     best_move = move
