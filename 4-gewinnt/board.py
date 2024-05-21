@@ -8,6 +8,9 @@ class Board:
     latest_move_x: int
     latest_move_y: int
 
+    height: int
+    width: int
+
     def __init__(self, field: Optional[np.ndarray] = None, *, width: Optional[int] = None, height: Optional[int] = None):
         """
         Creates a new Board for a Game to be played at
@@ -17,6 +20,7 @@ class Board:
         :param height: height of the field
         """
         self.field = field if field is not None else np.zeros((height, width))
+        self.height, self.width = height, width
         self.latest_move_x, self.latest_move_y = 0, 0
 
     def __repr__(self):
@@ -30,6 +34,13 @@ class Board:
 
     def __len__(self) -> int:
         return len(self.field)
+
+    def reset(self) -> None:
+        """
+        Clears all values in the field
+        :return: None, since this method is a modifier
+        """
+        self.field = np.zeros((self.height, self.width))
 
     def filled_fields(self) -> int:
         """
@@ -132,4 +143,4 @@ class Board:
         Returns a list of possible columns where a marker can be placed
         :return: List of column indices
         """
-        return [move for move in range(7) if self.can_play(move)]
+        return [move for move in [3, 4, 2, 5, 1, 6, 0] if self.can_play(move)]

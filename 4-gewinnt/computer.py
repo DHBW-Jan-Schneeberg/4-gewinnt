@@ -1,6 +1,19 @@
 from board import Board
 
 
+def get_modular_depth(filled_fields: int) -> int:
+    if filled_fields < 9:
+        return 4
+    if filled_fields < 14:
+        return 5
+    if filled_fields < 20:
+        return 6
+    if filled_fields < 25:
+        return 7
+
+    return 42 - filled_fields  # this is the max depth until every marker is placed
+
+
 class Computer:
     board: Board
     color: int
@@ -21,28 +34,45 @@ class Computer:
         """
         should_maximize = True if self.color == 1 else False
         best_move = None
+        depth = get_modular_depth(self.board.filled_fields())
+
+        # deal final blow if possible
+        for move in self.board.get_possible_moves():
+            next_board = Board(self.board.field.copy())
+            next_board.place_marker(move)
+            if next_board.is_game_over()[0]:
+                return move
 
         if should_maximize:
-            max_score = -42
+            max_score = -43
             for move in self.board.get_possible_moves():
                 next_board = Board(self.board.field.copy())
                 next_board.place_marker(move)
-                score = self.minimax(board=next_board, maximize=False, alpha=-42, beta=42, depth=4)
+                score = self.minimax(board=next_board, maximize=False, alpha=-42, beta=42, depth=depth)
                 if score > max_score:
                     max_score = score
                     best_move = move
         else:
-            min_score = 42
+            min_score = 43
             for move in self.board.get_possible_moves():
                 next_board = Board(self.board.field.copy())
                 next_board.place_marker(move)
-                score = self.minimax(board=next_board, maximize=True, alpha=-42, beta=42, depth=4)
+                score = self.minimax(board=next_board, maximize=True, alpha=-42, beta=42, depth=depth)
                 if score < min_score:
                     min_score = score
                     best_move = move
         return best_move
 
     def minimax(self, board: Board, maximize: bool, alpha: int, beta: int, depth: int) -> int:
+        """
+        Searches into the all future board positions and evaluates them
+        :param board: the board to evaluate
+        :param maximize: if the algorythm should maximize or minimize
+        :param alpha: parameter to prune branches, shows the highest possible score for a branch
+        :param beta: parameter to prune branches, shows the lowest possible score for a branch
+        :param depth: how many moves to algorythm shall look into the future
+        :return: an evaluation of the board
+        """
         game_over, winner = board.is_game_over()
 
         # Check if board configuration is already cached
@@ -54,8 +84,10 @@ class Computer:
         if game_over:
             if winner == 0:
                 move_evaluation = 0
+                self.bitboard[board] = move_evaluation
             else:
-                move_evaluation = 50 * (1 if winner == 1 else -1)
+                move_evaluation = 42 * (1 if winner == 1 else -1)
+                self.bitboard[board] = move_evaluation
         # Scenario 2: depth exceeded, evaluate position using heuristics
         elif depth == 0:
             move_evaluation = self.eval_field(board)
@@ -85,10 +117,7 @@ class Computer:
                     break
             move_evaluation = min_eval
 
-        # Cache board configuration with fitting score
-        self.bitboard[board] = move_evaluation
-
-        return self.bitboard[board]
+        return move_evaluation
 
     def eval_field(self, board: Board) -> int:
         """

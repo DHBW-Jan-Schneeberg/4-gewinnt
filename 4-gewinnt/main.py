@@ -25,7 +25,7 @@ class Game:
 
     computer_enemy: Optional[Computer]
     computer_color: Optional[int]
-    robot_move: int
+    robot_move: Optional[int]
 
     MARKER_RADIUS: int = 40  # all caps variable is a constant
     MARKER_SPACING: int = 105
@@ -45,11 +45,13 @@ class Game:
         self.winner = None
 
         self.buffered_input = (False, False, False)
+        self.board = Board(field=None, width=self.width, height=self.height)
 
         if against_computer and computer_color == 0:
             raise ValueError("Du kannst kein Spiel gegen den Computer starten, ohne ihm eine Farbe zu geben!")
 
-        self.computer_color = computer_color if computer_color else None
+        self.computer_enemy = Computer(self.board, computer_color) if against_computer else None
+        self.computer_color = computer_color if against_computer else None
         self.robot_move = None
 
     @property
@@ -58,8 +60,7 @@ class Game:
 
     def reset(self) -> None:
         pygame.display.set_caption(title="4-Gewinnt")
-        self.board = Board(field=None, width=self.width, height=self.height)
-        self.computer_enemy = Computer(board=self.board, color=self.computer_color) if self.computer_color else None
+        self.board.reset()
         self.winner = None
 
     def draw_field(self, show_cursor_position: bool = True) -> None:
