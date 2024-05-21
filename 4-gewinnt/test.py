@@ -34,6 +34,7 @@ board.place_marker(5)
 board.place_marker(5)
 board.place_marker(5)
 board.place_marker(5)
+print(board)
 
 comp = Computer(board=board, color=1)
 print(comp.calculate_move())
