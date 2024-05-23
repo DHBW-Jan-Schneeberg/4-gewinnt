@@ -28,7 +28,7 @@ class Computer:
 
     def calculate_move(self) -> int:
         """
-        Works towards finding the optimal move in the given situation for the computer.
+        Works towards finding the optimal move in the given situation for the computer
         Uses minimax and heuristic evaluation to search into future board states
         :return: the x-index of the column in which a marker should be dropped
         """
@@ -91,7 +91,7 @@ class Computer:
         # Scenario 2: depth exceeded, evaluate position using heuristics
         elif depth == 0:
             move_evaluation = self.eval_field(board)
-        # Scenario 3: Minimax
+        # Scenario 3: minimax evaluation
         elif maximize:
             max_eval = -42
             for move in board.get_possible_moves():
@@ -121,7 +121,7 @@ class Computer:
 
     def eval_field(self, board: Board) -> int:
         """
-        Calculates the evaluation of the current board
+        Calculates the evaluation of the current board if depth of minimax is exceeded
         :param board:
         :return: an EVALUATION of the board position
         """

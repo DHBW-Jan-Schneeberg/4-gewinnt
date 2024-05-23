@@ -13,7 +13,7 @@ class Board:
 
     def __init__(self, field: Optional[np.ndarray] = None, *, width: Optional[int] = None, height: Optional[int] = None):
         """
-        Creates a new Board for a Game to be played at
+        Creates a new board for a game to be played at
         WARNING: width and height arguments are only to be used when field is None
         :param field: ndarray symbolizing the field the game is played at
         :param width: width of the field

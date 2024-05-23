@@ -1,11 +1,13 @@
 import random
 import sys
 from typing import Optional
+import time
 
 import pygame
 
 from computer import Computer
 from board import Board
+from style import MouseSimulation
 
 
 class Game:
@@ -25,7 +27,7 @@ class Game:
 
     computer_enemy: Optional[Computer]
     computer_color: Optional[int]
-    robot_move: Optional[int]
+    computer_move: Optional[int]
 
     MARKER_RADIUS: int = 40  # all caps variable is a constant
     MARKER_SPACING: int = 105
@@ -52,18 +54,28 @@ class Game:
 
         self.computer_enemy = Computer(self.board, computer_color) if against_computer else None
         self.computer_color = computer_color if against_computer else None
-        self.robot_move = None
+        self.computer_move = None
+        self.mouse_simulation = MouseSimulation()
 
     @property
     def current_player(self):
         return 1 if self.board.filled_fields() % 2 == 0 else 2
 
     def reset(self) -> None:
+        """
+        Resets the game board and the winner
+        """
         pygame.display.set_caption(title="4-Gewinnt")
         self.board.reset()
         self.winner = None
 
-    def draw_field(self, show_cursor_position: bool = True) -> None:
+    def draw_field(self, show_cursor_position: bool = True, mouse_position: None | int = None) -> None:
+        """
+        Draws the game field and shows the current selected position of computer and human players
+        :param show_cursor_position:
+        :param mouse_position:
+        :return:
+        """
         self.screen.fill(color="blue")
         for x in range(self.width):
             for y in range(self.height):
@@ -71,15 +83,15 @@ class Game:
                 pygame.draw.circle(self.screen, color,
                                    (x * self.MARKER_SPACING + 55, y * self.MARKER_SPACING + 205), radius=self.MARKER_RADIUS)
 
-        mouse_x, _ = pygame.mouse.get_pos()  # We don't care about y since we place the marker always on top
-
         if show_cursor_position:
             if self.computer_enemy and self.current_player == self.computer_color:
-                # need to somehow display the action the computer is going to take
-                # (optional)
-                ...
+                mouse_x = self.mouse_simulation.calculate_mouse_movement(mouse_location=mouse_position)
+                self.show_current_selected_position(mouse_x)
             else:
+                mouse_x, _ = pygame.mouse.get_pos()  # We don't care about y since we place the marker always on top
                 self.show_current_selected_position(mouse_x // self.MARKER_SPACING)
+            pygame.display.flip()
+            return mouse_x
         pygame.display.flip()
 
     def show_current_selected_position(self, x: int) -> None:
@@ -91,7 +103,35 @@ class Game:
         color = "yellow" if self.current_player == 1 else "red"
         pygame.draw.circle(self.screen, color, (x * self.MARKER_SPACING + 55, 55), radius=self.MARKER_RADIUS)
 
+    def simulate_mouse_movement(self):
+        """
+        Simulates the mouse movement of the computer
+        :return:
+        """
+        mouse_position = self.draw_field(mouse_position=None)
+        time.sleep(0.4)
+        i = 0
+        while True:
+            mouse_position = self.draw_field(mouse_position=mouse_position)
+            time.sleep(0.4)
+            if self.computer_move is None:
+                continue
+            elif self.computer_move == mouse_position:
+                break
+            else:
+                for _ in range(abs(self.computer_move - mouse_position)):
+                    mouse_position = self.draw_field(mouse_position=mouse_position)
+
+    def show_four_connected(self):
+        """
+        Highlights the four connected circles of the winner
+        """
+        pass
+
     def start(self) -> None:
+        """
+        Ensures the main game flow, checks for winning condition
+        """
         self.reset()
         self.draw_field()
 
@@ -114,6 +154,7 @@ class Game:
                 else:
                     self.winner = "Gelb" if winner_code == 1 else "Rot"
                     pygame.display.set_caption(title=self.winner + " gewinnt")
+                    self.show_four_connected()
 
                 # Case 1: game is running
                 if not play_again_button.clicked and not return_button.clicked:
@@ -134,9 +175,10 @@ class Game:
 
             # Here starts the "real" game loop
             if self.computer_enemy and self.current_player == self.computer_color:
-                self.draw_field()
-                self.robot_move = self.computer_enemy.calculate_move()
-                self.board.place_marker(self.robot_move)
+                self.simulate_mouse_movement()
+                self.computer_move = self.computer_enemy.calculate_move()
+                self.simulate_mouse_movement()
+                self.board.place_marker(self.computer_move)
             else:
                 mouse_buttons_pressed = pygame.mouse.get_pressed(3)
                 if mouse_buttons_pressed != self.buffered_input:
@@ -159,6 +201,12 @@ class Game:
 
 
 def start_game(*, against_computer: bool, computer_color: Optional[int] = None) -> None:
+    """
+    Initializes the first game field
+    :param against_computer:
+    :param computer_color:
+    :return:
+    """
     screen = pygame.display.set_mode((740, 785))
     game = Game(screen, width=7, height=6, against_computer=against_computer, computer_color=computer_color)
     game.start()
@@ -184,6 +232,9 @@ class Button:
         self.buttonSurf = pygame.font.SysFont("Comic Sans MS", 30).render(text, True, (20, 20, 20))
 
     def process(self) -> None:
+        """
+        Provides functionality and visual appearance to buttons
+        """
         mouse_pos = pygame.mouse.get_pos()
         self.buttonSurface.fill(self.fillColors['normal'])
         if self.buttonRect.collidepoint(mouse_pos):
@@ -214,6 +265,9 @@ class OptionScreen:
                         ]
 
     def await_input(self) -> None:
+        """
+        Checks which game mode gets chosen
+        """
         pygame.display.set_caption("Spielmodus auswählen")
         while True:
             self.clock.tick(30)
