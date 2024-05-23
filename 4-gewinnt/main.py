@@ -116,7 +116,6 @@ class Game:
                 self.draw_field()
                 time.sleep(0.4)
 
-
     def calculate_mouse_movement(self) -> None:
         """
         Calculates which column the computer is hovering over for simulation purpose
@@ -132,16 +131,16 @@ class Game:
                 self.computer_mouse_position += 1
         # Case 3: Move computer mouse in a random direction
         else:
-            possible_moves = []
+            possible_mouse_moves = []
             if self.computer_mouse_position == 0:
-                possible_moves.append(1)
+                possible_mouse_moves.append(1)
             elif self.computer_mouse_position == 6:
-                possible_moves.append(5)
+                possible_mouse_moves.append(5)
             else:
-                possible_moves.append(self.computer_mouse_position - 1)
-                possible_moves.append(self.computer_mouse_position + 1)
+                possible_mouse_moves.append(self.computer_mouse_position - 1)
+                possible_mouse_moves.append(self.computer_mouse_position + 1)
 
-            self.computer_mouse_position = random.choice(possible_moves)
+            self.computer_mouse_position = random.choice(possible_mouse_moves)
 
     def show_connect_four(self):
         """
@@ -175,19 +174,21 @@ class Game:
                 else:
                     self.winner = "Gelb" if winner_code == 1 else "Rot"
                     pygame.display.set_caption(title=self.winner + " gewinnt")
+                    winner_text = TextField(200, 110, f"{self.winner} gewinnt das Match!", self.screen)
+                    winner_text.process()
                     self.show_connect_four()
 
-                # Case 1: game is running
+                # Case 1: game is running, no button pressed yet
                 if not play_again_button.clicked and not return_button.clicked:
                     play_again_button.process()
                     return_button.process()
                     pygame.display.flip()
-                # Case 2: Play another round
+                # Case 2: play another round
                 elif play_again_button.clicked:
                     self.reset()
                     play_again_button.clicked = False
                     game_over = False
-                # Case 3: Get back to modus menu
+                # Case 3: get back to modus menu
                 else:
                     option_screen = OptionScreen()
                     option_screen.await_input()
@@ -200,6 +201,8 @@ class Game:
                 self.computer_move = self.computer_enemy.calculate_move()
                 self.simulate_mouse_movement()
                 self.board.place_marker(self.computer_move)
+
+                pygame.mixer.Sound.play(sound_tile)
                 self.computer_mouse_position = None
                 self.computer_move = None
             else:
@@ -212,6 +215,7 @@ class Game:
                         x = mouse_x // self.MARKER_SPACING
                         if self.board.can_play(x):
                             self.board.place_marker(x)
+                            pygame.mixer.Sound.play(sound_tile)
 
             game_over, winner_code = self.board.is_game_over()
             if game_over:
@@ -233,6 +237,12 @@ def start_game(*, against_computer: bool, computer_color: Optional[int] = None) 
     screen = pygame.display.set_mode((740, 785))
     game = Game(screen, width=7, height=6, against_computer=against_computer, computer_color=computer_color)
     game.start()
+
+
+# Loading sounds for buttons and tiles
+pygame.mixer.init()
+sound_tile = pygame.mixer.Sound("4-gewinnt/4-gewinnt/style/sounds/sound_1.mp3")
+sound_button = pygame.mixer.Sound("4-gewinnt/4-gewinnt/style/sounds/sound_2.mp3")
 
 
 class Button:
@@ -264,12 +274,32 @@ class Button:
             self.buttonSurface.fill(self.fillColors['hover'])
             if pygame.mouse.get_pressed(num_buttons=3)[0]:
                 self.clicked = True
+                pygame.mixer.Sound.play(sound_button)
+                time.sleep(0.1)
 
         self.buttonSurface.blit(self.buttonSurf, [
             self.buttonRect.width / 2 - self.buttonSurf.get_rect().width / 2,
             self.buttonRect.height / 2 - self.buttonSurf.get_rect().height / 2
         ])
         self.screen.blit(self.buttonSurface, self.buttonRect)
+
+
+class TextField:
+    screen: pygame.surface
+
+    def __init__(self, x: int, y: int, text: str, screen: pygame.Surface) -> None:
+        self.x = x
+        self.y = y
+        self.screen = screen
+        self.text = text
+
+    def process(self) -> None:
+        """
+        Displays text
+        """
+        game_font = pygame.font.SysFont('Comic Sans MS', 30)
+        self.text_surface = game_font.render(self.text, False, 0xd0d1d1)
+        self.screen.blit(self.text_surface, (self.x, self.y))
 
 
 class OptionScreen:
