@@ -2,7 +2,7 @@ from board import Board
 
 
 def get_modular_depth(filled_fields: int) -> int:
-    if filled_fields < 12:
+    if filled_fields < 15:
         return 4
     if filled_fields < 18:
         return 5

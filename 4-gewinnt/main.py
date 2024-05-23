@@ -7,7 +7,6 @@ import pygame
 
 from computer import Computer
 from board import Board
-from style import MouseSimulation
 
 
 class Game:
@@ -55,7 +54,7 @@ class Game:
         self.computer_enemy = Computer(self.board, computer_color) if against_computer else None
         self.computer_color = computer_color if against_computer else None
         self.computer_move = None
-        self.mouse_simulation = MouseSimulation()
+        self.computer_mouse_position = None
 
     @property
     def current_player(self):
@@ -69,7 +68,7 @@ class Game:
         self.board.reset()
         self.winner = None
 
-    def draw_field(self, show_cursor_position: bool = True, mouse_position: None | int = None) -> None:
+    def draw_field(self, show_cursor_position: bool = True) -> None:
         """
         Draws the game field and shows the current selected position of computer and human players
         :param show_cursor_position:
@@ -85,13 +84,11 @@ class Game:
 
         if show_cursor_position:
             if self.computer_enemy and self.current_player == self.computer_color:
-                mouse_x = self.mouse_simulation.calculate_mouse_movement(mouse_location=mouse_position)
-                self.show_current_selected_position(mouse_x)
+                self.calculate_mouse_movement()
+                self.show_current_selected_position(self.computer_mouse_position)
             else:
                 mouse_x, _ = pygame.mouse.get_pos()  # We don't care about y since we place the marker always on top
                 self.show_current_selected_position(mouse_x // self.MARKER_SPACING)
-            pygame.display.flip()
-            return mouse_x
         pygame.display.flip()
 
     def show_current_selected_position(self, x: int) -> None:
@@ -103,26 +100,50 @@ class Game:
         color = "yellow" if self.current_player == 1 else "red"
         pygame.draw.circle(self.screen, color, (x * self.MARKER_SPACING + 55, 55), radius=self.MARKER_RADIUS)
 
-    def simulate_mouse_movement(self):
+    def simulate_mouse_movement(self) -> None:
         """
         Simulates the mouse movement of the computer
-        :return:
         """
-        mouse_position = self.draw_field(mouse_position=None)
-        time.sleep(0.4)
-        i = 0
-        while True:
-            mouse_position = self.draw_field(mouse_position=mouse_position)
-            time.sleep(0.4)
-            if self.computer_move is None:
-                continue
-            elif self.computer_move == mouse_position:
-                break
-            else:
-                for _ in range(abs(self.computer_move - mouse_position)):
-                    mouse_position = self.draw_field(mouse_position=mouse_position)
+        if self.computer_move is None:
+            time.sleep(0.5)
+            for _ in range(4):
+                self.draw_field()
+                time.sleep(0.4)
+        elif self.computer_move == self.computer_mouse_position:
+            time.sleep(1)
+        else:
+            for _ in range(abs(self.computer_move - self.computer_mouse_position)):
+                self.draw_field()
+                time.sleep(0.4)
 
-    def show_four_connected(self):
+
+    def calculate_mouse_movement(self) -> None:
+        """
+        Calculates which column the computer is hovering over for simulation purpose
+        """
+        # Case 1: Initialize computer mouse in the middle of the scrren
+        if self.computer_mouse_position is None:
+            self.computer_mouse_position = 3 #random.randint(0, 6)
+        # Case 2: Move computer mouse towards the calculated position
+        elif self.computer_move is not None:
+            if self.computer_mouse_position > self.computer_move:
+                self.computer_mouse_position -= 1
+            elif self.computer_mouse_position < self.computer_move:
+                self.computer_mouse_position += 1
+        # Case 3: Move computer mouse in a random direction
+        else:
+            possible_moves = []
+            if self.computer_mouse_position == 0:
+                possible_moves.append(1)
+            elif self.computer_mouse_position == 6:
+                possible_moves.append(5)
+            else:
+                possible_moves.append(self.computer_mouse_position - 1)
+                possible_moves.append(self.computer_mouse_position + 1)
+
+            self.computer_mouse_position = random.choice(possible_moves)
+
+    def show_connect_four(self):
         """
         Highlights the four connected circles of the winner
         """
@@ -154,7 +175,7 @@ class Game:
                 else:
                     self.winner = "Gelb" if winner_code == 1 else "Rot"
                     pygame.display.set_caption(title=self.winner + " gewinnt")
-                    self.show_four_connected()
+                    self.show_connect_four()
 
                 # Case 1: game is running
                 if not play_again_button.clicked and not return_button.clicked:
@@ -179,6 +200,8 @@ class Game:
                 self.computer_move = self.computer_enemy.calculate_move()
                 self.simulate_mouse_movement()
                 self.board.place_marker(self.computer_move)
+                self.computer_mouse_position = None
+                self.computer_move = None
             else:
                 mouse_buttons_pressed = pygame.mouse.get_pressed(3)
                 if mouse_buttons_pressed != self.buffered_input:
