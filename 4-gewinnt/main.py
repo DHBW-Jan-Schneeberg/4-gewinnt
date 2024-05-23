@@ -110,7 +110,7 @@ class Game:
                 self.draw_field()
                 time.sleep(0.4)
         elif self.computer_move == self.computer_mouse_position:
-            time.sleep(1)
+            time.sleep(0.4)
         else:
             for _ in range(abs(self.computer_move - self.computer_mouse_position)):
                 self.draw_field()
