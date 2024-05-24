@@ -28,7 +28,7 @@ class Game:
     computer_color: Optional[int]
     computer_move: Optional[int]
 
-    MARKER_RADIUS: int = 40  # all caps variable is a constant
+    MARKER_RADIUS: int = 40  # all caps variables are constants
     MARKER_SPACING: int = 105
 
     def __init__(self, screen: pygame.Surface, *, width, height, against_computer, computer_color=None):

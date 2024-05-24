@@ -4,9 +4,9 @@ from board import Board
 def get_modular_depth(filled_fields: int) -> int:
     """
     A helper method, representing a simple mathematical function that takes the amount of filled fields on the board
-    and returns a depth value suited for the algorythm to be performant
+    and returns a suiting depth value to ensure a performant algorithm
     :param filled_fields: the amount of filled fields in the board
-    :return: an integer representing the amount of moves to go into the future
+    :return: an integer representing the amount of moves having to be calculated into the future
     """
     if filled_fields < 15:
         return 4
@@ -41,15 +41,15 @@ class Computer:
         best_move = None
         modular_depth = get_modular_depth(self.board.filled_fields())
 
-        # Check directly if the computer can win with the next move
-        # This makes sure, the computer doesn't stall on its winning move, which would frustrate the player
+        # Check directly if the computer can win in the next move
+        # This ensures that computer doesn't stall on its winning move, which would frustrate the player
         for move in self.board.get_possible_moves():
             next_board = Board(self.board.field.copy())
             next_board.place_marker(move)
             if next_board.is_game_over()[0]:
                 return move
 
-        # If it cannot win directly, it will generate all possible board combinations and evaluate them
+        # If the computer cannot win directly, all possible board combinations get generated and evaluated
         if self.should_maximize:
             max_score = -43
             for move in self.board.get_possible_moves():
@@ -145,7 +145,7 @@ class Computer:
 
     def heuristic_evaluation_of(self, board_slice: tuple[int, ...]) -> int:
         """
-        Gives a heuristic evaluation of a small selection
+        Gives a heuristic evaluation of a small selection containing four neighboring pieces
         :param board_slice: the selection from the board
         :return: a score
         """
