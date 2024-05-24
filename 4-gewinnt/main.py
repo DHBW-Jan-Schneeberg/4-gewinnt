@@ -142,7 +142,6 @@ class Game:
                              start_pos=(screen_x + self.MARKER_RADIUS, screen_y),
                              end_pos=(screen_x, screen_y + self.MARKER_RADIUS),
                              width=3)
-        pass
 
     def start(self) -> None:
         self.reset()
