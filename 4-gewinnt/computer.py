@@ -84,7 +84,7 @@ class Computer:
         :param depth: how many moves to algorythm shall look into the future
         :return: an evaluation of the board
         """
-        game_over, winner = board.is_game_over()
+        game_over, winner, _ = board.is_game_over()
 
         # Check if board configuration is already cached
         if board in self.transposition_table.keys():
