@@ -24,13 +24,9 @@ class Computer:
     board: Board
     color: int
 
-    transposition_table: dict[Board, int]
-
     def __init__(self, board: Board, color):
         self.board = board
         self.color = color
-
-        self.transposition_table = dict()
 
     @property
     def should_maximize(self):
@@ -86,53 +82,38 @@ class Computer:
         """
         game_over, winner, _ = board.is_game_over()
 
-        # Check if board configuration is already cached
-        if board in self.transposition_table.keys():
-            # TODO fix the cache, it never hits (but why doesn't it hit ffs)
-            print("cache hit", len(self.transposition_table))
-            return self.transposition_table[board]
-
-        # If the position is not already evaluated, we need to evaluate them.
-        # This evaluation depends on one of four scenarios
-
         # Scenario 1: game is over
         if game_over:
             if winner == 0:
-                move_evaluation = 0
-                self.transposition_table[board] = move_evaluation
+                return 0
             else:
-                move_evaluation = 42 * (1 if winner == 1 else -1)
-                self.transposition_table[board] = move_evaluation
+                return 42 * (1 if winner == 1 else -1)
         # Scenario 2: depth exceeded, evaluate position using heuristics
         elif depth == 0:
-            move_evaluation = self.eval_field(board)
+            return self.eval_field(board)
         # Scenario 3: minimax evaluation
         elif maximize:
             max_eval = -42
             for move in board.get_possible_moves():
                 next_board = Board(board.field.copy())
                 next_board.place_marker(move)
-                score = self.transposition_table[next_board] if next_board in self.transposition_table.keys() else self.minimax(
-                    board=next_board, maximize=False, alpha=alpha, beta=beta, depth=depth - 1)
+                score = self.minimax(board=next_board, maximize=False, alpha=alpha, beta=beta, depth=depth - 1)
                 max_eval = max(max_eval, score)
                 alpha = max(alpha, score)
                 if beta <= alpha:
                     break
-            move_evaluation = max_eval
+            return max_eval
         else:
             min_eval = 42
             for move in board.get_possible_moves():
                 next_board = Board(board.field.copy())
                 next_board.place_marker(move)
-                score = self.transposition_table[next_board] if next_board in self.transposition_table.keys() else self.minimax(
-                    board=next_board, maximize=True, alpha=alpha, beta=beta, depth=depth - 1)
+                score = self.minimax(board=next_board, maximize=True, alpha=alpha, beta=beta, depth=depth - 1)
                 min_eval = min(min_eval, score)
                 beta = min(beta, score)
                 if beta <= alpha:
                     break
-            move_evaluation = min_eval
-
-        return move_evaluation
+            return min_eval
 
     def eval_field(self, board: Board) -> int:
         """
