@@ -97,17 +97,13 @@ class Game:
         pygame.draw.circle(self.screen, color, (x * self.MARKER_SPACING + 55, 55), radius=self.MARKER_RADIUS)
 
     def move_computer_indicator(self) -> None:
-        if self.computer_move is None:
-            time.sleep(0.5)
-            for _ in range(4):
-                self.draw_field()
-                time.sleep(0.4)
-        elif self.computer_move == self.computer_indicator_position:
+        if self.computer_move == self.computer_indicator_position:
             time.sleep(0.4)
-        else:
-            for _ in range(abs(self.computer_move - self.computer_indicator_position)):
-                self.draw_field()
-                time.sleep(0.4)
+            return
+
+        for _ in range(abs(self.computer_move - self.computer_indicator_position)):
+            self.draw_field()
+            time.sleep(0.4)
 
     def get_next_computer_indicator(self) -> None:
         """
@@ -189,7 +185,10 @@ class Game:
 
             # Here starts the "real" game loop
             if self.computer_enemy and self.board.current_player == self.computer_color:
-                self.move_computer_indicator()
+                # This animates some random movement for the computer
+                for _ in range(4):
+                    self.draw_field()
+                    time.sleep(0.4)
                 self.computer_move = self.computer_enemy.calculate_move()
                 self.move_computer_indicator()
                 self.board.place_marker(self.computer_move)
@@ -212,7 +211,6 @@ class Game:
             game_over, winner_code, winning_markers = self.board.is_game_over()
             if game_over:
                 self.draw_field(show_cursor_position=False, winning_markers=winning_markers)
-                print(winning_markers)
                 # Waits so the player can release the pressed mouse button to not immediately restart the game
                 pygame.time.delay(100)
             else:
