@@ -3,6 +3,19 @@ import numpy as np
 from typing import Optional
 
 
+def selection_is_connected(selection: tuple[int, ...]) -> bool:
+    """
+    Checks if a selection contains only one unique element
+    :param selection:
+    :return:
+    """
+    selection = set(selection)
+    if 0 in selection or len(selection) > 1:
+        return False
+
+    return True
+
+
 class Board:
     field: np.ndarray
     latest_move_x: int
@@ -22,6 +35,10 @@ class Board:
         self.field = field if field is not None else np.zeros((height, width))
         self.height, self.width = height, width
         self.latest_move_x, self.latest_move_y = 0, 0
+
+    @property
+    def current_player(self):
+        return 1 if self.filled_fields() % 2 == 0 else 2
 
     def __repr__(self):
         return str(self.field)
@@ -49,69 +66,61 @@ class Board:
         """
         return np.count_nonzero(self.field)
 
-    def is_4_straight_connected(self, x: int, y: int, *, horizontal: bool) -> tuple[bool, tuple]:
+    def is_4_straight_connected(self, x: int, y: int, *, horizontal: bool) -> tuple[bool, tuple[int, ...]]:
         """
         Checks for an x,y coordinate if there are 4 connected, same color markers in a straight line
         :param x: x-coordinate
         :param y: y-coordinate
         :param horizontal: Boolean representing if the check should occur horizontal or vertical
-        :return: True if there are 4 connected, same color markers. False, if there are not
+        :return: Boolean representing if the condition was met, as well as the made selection
         """
-        selection = tuple(self[x + (i if horizontal else 0)][y + (i if not horizontal else 0)] for i in range(4))
-        if selection[0] == 0:  # Obviously we can't have 4 connected pieces if the first entry is empty
-            return False, selection
+        selection = tuple(int(self[x + (i if horizontal else 0)][y + (i if not horizontal else 0)]) for i in range(4))
+        return selection_is_connected(selection), selection
 
-        for elem in selection:
-            if elem != selection[0]:
-                return False, selection
-
-        return True, selection
-
-    def is_4_diagonal_connected(self, x: int, y: int, *, high_to_low: bool) -> tuple[bool, tuple]:
+    def is_4_diagonal_connected(self, x: int, y: int, *, high_to_low: bool) -> tuple[bool, tuple[int, ...]]:
         """
         Checks for an x,y coordinate if there are 4 connected, same color markers in a diagonal line
         :param x: x-coordinate
         :param y: y-coordinate
         :param high_to_low: Boolean representing if the check should occur from upper-left to lower-right or lower-left to upper-right
-        :return: True if there are 4 connected, same color markers. False, if there are not
+        :return: Boolean representing if the condition was met, as well as the made selection
         """
-        selection = tuple(self[x + i][y + (i if not high_to_low else 3 - i)] for i in range(4))
+        selection = tuple(int(self[x + i][y + (i if not high_to_low else 3 - i)]) for i in range(4))
+        return selection_is_connected(selection), selection
 
-        if selection[0] == 0:  # Obviously we can't have 4 connected pieces if the first entry is empty
-            return False, selection
-
-        for elem in selection:
-            if elem != selection[0]:
-                return False, selection
-
-        return True, selection
-
-    def is_game_over(self) -> tuple[bool, int | np.ndarray]:
+    def is_game_over(self) -> tuple[bool, int | np.ndarray, Optional[list[tuple[int, int]]]]:
+        """
+        Checks if the draw or winning condition is met
+        :return: a boolean representing if the game is over,
+            the winner (0 = draw, 1 = yellow, 2 = red),
+            as well as a list containing the (x, y) coords of the "win-causing" markers
+        """
         # Case 1: tie
         upper_row = [self[x][0] for x in range(7)]
         if 0 not in upper_row:
-            return True, 0
+            return True, 0, None
 
         # Case 2: four in a row
-        # todo explain the max() thing
+        # This works by looking at the latest move played and comparing the right and left markers
+        # at a maximum of 3 markers to both its sides
         for x in range(max(0, self.latest_move_x - 3), 4):
             if self.is_4_straight_connected(x, self.latest_move_y, horizontal=True)[0]:
-                return True, self[x][self.latest_move_y]
+                return True, self[x][self.latest_move_y], [(x_, self.latest_move_y) for x_ in range(x, x+4)]
 
         # Case 3: four in a column
-        # todo explain why we dont loop
+        # Only if the marker was placed in the upper 3 rows, a connect-4 can be achieved vertically
         if self.latest_move_y <= 2 and self.is_4_straight_connected(self.latest_move_x, self.latest_move_y, horizontal=False)[0]:
-            return True, self[self.latest_move_x][self.latest_move_y]
+            return True, self[self.latest_move_x][self.latest_move_y], [(self.latest_move_x, y_) for y_ in range(self.latest_move_y, self.latest_move_y+4)]
 
         # Case 4: four diagonally
         for x in range(4):
             for y in range(3):
                 if self.is_4_diagonal_connected(x, y, high_to_low=False)[0]:
-                    return True, self[x][y]
+                    return True, self[x][y], None
                 elif self.is_4_diagonal_connected(x, y, high_to_low=True)[0]:
-                    return True, self[x][y+3]
+                    return True, self[x][y+3], None
 
-        return False, -1
+        return False, -1, None
 
     def can_play(self, x: int) -> bool:
         """
@@ -119,9 +128,10 @@ class Board:
         :param x: x-index of the column
         :return: True if a marker can be placed, False otherwise
         """
-        if self[x][0] != 0:
-            return False
-        return True
+        if self[x][0] == 0:
+            return True
+
+        return False
 
     def place_marker(self, x: int) -> None:
         """
@@ -131,10 +141,11 @@ class Board:
         """
         if not self.can_play(x):
             raise ValueError("Cannot place marker because the column is full")
-        for y in range(len(self.field)):
-            y = 5 - y
+
+        # Looks cursed, but this
+        for y in range(len(self.field) - 1, -1, -1):
             if self[x][y] == 0:
-                self[x][y] = 1 if self.filled_fields() % 2 == 0 else 2
+                self[x][y] = self.current_player
                 self.latest_move_x, self.latest_move_y = x, y
                 return
 

@@ -56,10 +56,6 @@ class Game:
         self.computer_move = None
         self.computer_mouse_position = None
 
-    @property
-    def current_player(self):
-        return 1 if self.board.filled_fields() % 2 == 0 else 2
-
     def reset(self) -> None:
         """
         Resets the game board and the winner
@@ -68,32 +64,32 @@ class Game:
         self.board.reset()
         self.winner = None
 
-    def draw_field(self, show_cursor_position: bool = True) -> None:
+    def draw_field(self, show_cursor_position: bool = True, winning_markers: Optional[list[tuple[int, int]]] = None) -> None:
         """
         Draws the game field and shows the current selected position of computer and human players
-        :param show_cursor_position:
-        :param mouse_position:
-        :return:
+        :param show_cursor_position: if a marker should be displayed above the column the player is hovering
+        :param winning_markers: if a connect-4 was scored, this list shall contain the (x, y) coords of the 4 markers
         """
         self.screen.fill(color="blue")
         for x in range(self.width):
             for y in range(self.height):
                 color = 0xd0d1d1 if self.board[x][y] == 0 else "yellow" if self.board[x][y] == 1 else "red"
-                pygame.draw.circle(self.screen, color,
-                                   (x * self.MARKER_SPACING + 55, y * self.MARKER_SPACING + 205), radius=self.MARKER_RADIUS)
+                pygame.draw.circle(self.screen, color, (x * self.MARKER_SPACING + 55, y * self.MARKER_SPACING + 205), radius=self.MARKER_RADIUS)
 
         if show_cursor_position:
             if self.computer_enemy and self.current_player == self.computer_color:
                 self.calculate_mouse_movement()
-                self.show_current_selected_position(self.computer_mouse_position)
+                self.show_selected_position(self.computer_mouse_position)
             else:
                 mouse_x, _ = pygame.mouse.get_pos()  # We don't care about y since we place the marker always on top
-                self.show_current_selected_position(mouse_x // self.MARKER_SPACING)
+                self.show_selected_position(mouse_x // self.MARKER_SPACING)
+        if winning_markers:
+            self.show_connect_four(winning_markers)
         pygame.display.flip()
 
-    def show_current_selected_position(self, x: int) -> None:
+    def show_selected_position(self, x: int) -> None:
         """
-        Renders a circle
+        Draws a marker above the selected column
         :param x: x-index of the column
         :return: None
         """
@@ -101,9 +97,6 @@ class Game:
         pygame.draw.circle(self.screen, color, (x * self.MARKER_SPACING + 55, 55), radius=self.MARKER_RADIUS)
 
     def simulate_mouse_movement(self) -> None:
-        """
-        Simulates the mouse movement of the computer
-        """
         if self.computer_move is None:
             time.sleep(0.5)
             for _ in range(4):
@@ -120,9 +113,9 @@ class Game:
         """
         Calculates which column the computer is hovering over for simulation purpose
         """
-        # Case 1: Initialize computer mouse in the middle of the scrren
+        # Case 1: Initialize computer mouse in the middle of the screen
         if self.computer_mouse_position is None:
-            self.computer_mouse_position = 3 #random.randint(0, 6)
+            self.computer_mouse_position = 3
         # Case 2: Move computer mouse towards the calculated position
         elif self.computer_move is not None:
             if self.computer_mouse_position > self.computer_move:
@@ -131,27 +124,20 @@ class Game:
                 self.computer_mouse_position += 1
         # Case 3: Move computer mouse in a random direction
         else:
-            possible_mouse_moves = []
-            if self.computer_mouse_position == 0:
-                possible_mouse_moves.append(1)
-            elif self.computer_mouse_position == 6:
-                possible_mouse_moves.append(5)
-            else:
-                possible_mouse_moves.append(self.computer_mouse_position - 1)
-                possible_mouse_moves.append(self.computer_mouse_position + 1)
+            # When on the edge, move towards the field, otherwise pick random between left and right
+            self.computer_mouse_position = \
+                1 if self.computer_mouse_position == 0 \
+                else 5 if self.computer_mouse_position == 6 \
+                else self.computer_mouse_position + random.choice([-1, 1])
 
-            self.computer_mouse_position = random.choice(possible_mouse_moves)
-
-    def show_connect_four(self):
+    def show_connect_four(self, coords: list[tuple[int, int]]) -> None:
         """
-        Highlights the four connected circles of the winner
+        Highlights the four connected circles by drawing a black X over them
+        :param coords: a list containing (x, y) tuples indicating the index of each colum/row position a winning marker is at
         """
         pass
 
     def start(self) -> None:
-        """
-        Ensures the main game flow, checks for winning condition
-        """
         self.reset()
         self.draw_field()
 
@@ -176,23 +162,23 @@ class Game:
                     pygame.display.set_caption(title=self.winner + " gewinnt")
                     winner_text = TextField(200, 110, f"{self.winner} gewinnt das Match!", self.screen)
                     winner_text.process()
-                    self.show_connect_four()
 
-                # Case 1: game is running, no button pressed yet
-                if not play_again_button.clicked and not return_button.clicked:
-                    play_again_button.process()
-                    return_button.process()
-                    pygame.display.flip()
-                # Case 2: play another round
-                elif play_again_button.clicked:
+                # Case 1: play another round
+                if play_again_button.clicked:
                     self.reset()
                     play_again_button.clicked = False
                     game_over = False
-                # Case 3: get back to modus menu
-                else:
+                # Case 2: get back to modus menu
+                elif return_button.clicked:
                     option_screen = OptionScreen()
                     option_screen.await_input()
                     return_button = False
+                # Case 3: game is over, but no button pressed yet
+                else:
+                    play_again_button.process()
+                    return_button.process()
+                    pygame.display.flip()
+
                 continue
 
             # Here starts the "real" game loop
@@ -217,14 +203,14 @@ class Game:
                             self.board.place_marker(x)
                             pygame.mixer.Sound.play(sound_tile)
 
-            game_over, winner_code = self.board.is_game_over()
+            game_over, winner_code, winning_markers = self.board.is_game_over()
             if game_over:
-                self.draw_field(show_cursor_position=False)
+                self.draw_field(show_cursor_position=False, winning_markers=winning_markers)
 
                 # Waits so the player can release the pressed mouse button to not immediately restart the game
                 pygame.time.delay(100)
             else:
-                self.draw_field(show_cursor_position=True)
+                self.draw_field()
 
 
 def start_game(*, against_computer: bool, computer_color: Optional[int] = None) -> None:
