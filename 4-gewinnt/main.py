@@ -118,10 +118,7 @@ class Game:
             self.computer_mouse_position = 3
         # Case 2: Move computer mouse towards the calculated position
         elif self.computer_move is not None:
-            if self.computer_mouse_position > self.computer_move:
-                self.computer_mouse_position -= 1
-            elif self.computer_mouse_position < self.computer_move:
-                self.computer_mouse_position += 1
+            self.computer_mouse_position += 1 if self.computer_mouse_position < self.computer_move else -1
         # Case 3: Move computer mouse in a random direction
         else:
             # When on the edge, move towards the field, otherwise pick random between left and right
@@ -223,12 +220,6 @@ def start_game(*, against_computer: bool, computer_color: Optional[int] = None) 
     screen = pygame.display.set_mode((740, 785))
     game = Game(screen, width=7, height=6, against_computer=against_computer, computer_color=computer_color)
     game.start()
-
-
-# Loading sounds for buttons and tiles
-pygame.mixer.init()
-sound_tile = pygame.mixer.Sound("4-gewinnt/4-gewinnt/style/sounds/sound_1.mp3")
-sound_button = pygame.mixer.Sound("4-gewinnt/4-gewinnt/style/sounds/sound_2.mp3")
 
 
 class Button:
@@ -340,4 +331,8 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    # Loading sounds for buttons and tiles
+    pygame.mixer.init()
+    sound_tile = pygame.mixer.Sound("4-gewinnt/4-gewinnt/style/sounds/sound_1.mp3")
+    sound_button = pygame.mixer.Sound("4-gewinnt/4-gewinnt/style/sounds/sound_2.mp3")
     main()
