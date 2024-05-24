@@ -116,9 +116,9 @@ class Board:
         for x in range(4):
             for y in range(3):
                 if self.is_4_diagonal_connected(x, y, high_to_low=False)[0]:
-                    return True, self[x][y], None
+                    return True, self[x][y], [(x+i, y+i) for i in range(4)]
                 elif self.is_4_diagonal_connected(x, y, high_to_low=True)[0]:
-                    return True, self[x][y+3], None
+                    return True, self[x][y+3], [(x+i, y+3-i) for i in range(4)]
 
         return False, -1, None
 
