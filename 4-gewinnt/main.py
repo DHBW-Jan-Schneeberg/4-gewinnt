@@ -132,6 +132,16 @@ class Game:
         Highlights the four connected circles by drawing a black X over them
         :param coords: a list containing (x, y) tuples indicating the index of each colum/row position a winning marker is at
         """
+        for x, y in coords:
+            screen_x, screen_y = self.MARKER_SPACING * x + 35, 185 + self.MARKER_SPACING * y
+            pygame.draw.line(self.screen, "black",
+                             start_pos=(screen_x, screen_y),
+                             end_pos=(screen_x + self.MARKER_RADIUS, screen_y + self.MARKER_RADIUS),
+                             width=3)
+            pygame.draw.line(self.screen, "black",
+                             start_pos=(screen_x + self.MARKER_RADIUS, screen_y),
+                             end_pos=(screen_x, screen_y + self.MARKER_RADIUS),
+                             width=3)
         pass
 
     def start(self) -> None:
