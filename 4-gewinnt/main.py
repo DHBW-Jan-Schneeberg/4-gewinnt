@@ -189,9 +189,9 @@ class Game:
 
             # Here starts the "real" game loop
             if self.computer_enemy and self.board.current_player == self.computer_color:
-                self.get_next_computer_indicator()
+                self.move_computer_indicator()
                 self.computer_move = self.computer_enemy.calculate_move()
-                self.get_next_computer_indicator()
+                self.move_computer_indicator()
                 self.board.place_marker(self.computer_move)
 
                 pygame.mixer.Sound.play(sound_tile)
