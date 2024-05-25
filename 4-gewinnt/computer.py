@@ -5,7 +5,7 @@ def get_modular_depth(filled_fields: int) -> int:
     """
     A helper method, representing a simple mathematical function that takes the amount of filled fields on the board
     and returns a suiting depth value to ensure a performant algorithm
-    :param filled_fields: the amount of filled fields in the board
+    :param filled_fields: the amount of filled fields on the board
     :return: an integer representing the amount of moves having to be calculated into the future
     """
     if filled_fields < 15:
@@ -119,7 +119,7 @@ class Computer:
         """
         Calculates the evaluation of the current board if depth of minimax is exceeded
         :param board: the board to be evaluated
-        :return: an EVALUATION of the board position
+        :return: an evaluation of the board position
         """
         score = 0
 

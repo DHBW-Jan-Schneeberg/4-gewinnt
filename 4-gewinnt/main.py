@@ -37,7 +37,7 @@ class Game:
         :param width: the width of the screen
         :param height: the height of the screen
         :param against_computer: if the player wants to play against the computer
-        :param computer_color: if the players wants to play against the computer, he can choose whether the computer is yellow or red
+        :param computer_color: if the player wants to play against the computer, they can choose whether the computer is yellow or red
         """
         self.screen = screen
         self.clock = pygame.time.Clock()
@@ -222,7 +222,7 @@ def start_game(*, against_computer: bool, computer_color: Optional[int] = None) 
     Initializes the first game field
     :param against_computer:
     :param computer_color:
-    :return:
+    :return: None
     """
     screen = pygame.display.set_mode((740, 785))
     game = Game(screen, width=7, height=6, against_computer=against_computer, computer_color=computer_color)
@@ -303,7 +303,7 @@ class OptionScreen:
 
     def await_input(self) -> None:
         """
-        Checks which game mode gets chosen
+        Checks which game mode is getting chosen
         """
         pygame.display.set_caption("Spielmodus auswählen")
         while True:

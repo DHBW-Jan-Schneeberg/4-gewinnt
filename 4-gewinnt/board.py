@@ -7,7 +7,7 @@ def selection_is_connected(selection: tuple[int, ...]) -> bool:
     """
     Checks if a selection contains only one unique element
     :param selection:
-    :return:
+    :return: Boolean
     """
     selection = set(selection)
     if 0 in selection or len(selection) > 1:
